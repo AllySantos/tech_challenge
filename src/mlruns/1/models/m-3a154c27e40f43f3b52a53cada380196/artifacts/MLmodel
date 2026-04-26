@@ -1,0 +1,23 @@
+artifact_path: file:D:/POS_TECH/tech_challenge/src/mlruns/1/models/m-3a154c27e40f43f3b52a53cada380196/artifacts
+flavors:
+  python_function:
+    config:
+      device: null
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pytorch
+    pickle_module_name: mlflow.pytorch.pickle_module
+    python_version: 3.13.1
+  pytorch:
+    code: null
+    model_data: data
+    pytorch_version: 2.11.0+cpu
+mlflow_version: 3.10.1
+model_id: m-3a154c27e40f43f3b52a53cada380196
+model_size_bytes: 213952
+model_uuid: m-3a154c27e40f43f3b52a53cada380196
+prompts: null
+run_id: 502d24e108e54339abcbd99502783a20
+utc_time_created: '2026-04-26 18:13:52.135283'

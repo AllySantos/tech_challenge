@@ -1,0 +1,23 @@
+artifact_path: file:D:/POS_TECH/tech_challenge/src/mlruns/3/models/m-21f66dc1a78846ec8c3e3dea1b75235f/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.1
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.10.1
+model_id: m-21f66dc1a78846ec8c3e3dea1b75235f
+model_size_bytes: 6151
+model_uuid: m-21f66dc1a78846ec8c3e3dea1b75235f
+prompts: null
+run_id: 61a8557630964a039e8706564867eecf
+utc_time_created: '2026-04-26 18:22:36.097255'

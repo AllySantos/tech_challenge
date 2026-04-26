@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+
 SRC_DIR = Path(__file__).resolve().parent.parent
 print(f"SRC_DIR: {SRC_DIR}")
 
@@ -13,8 +14,7 @@ if str(SRC_DIR) not in sys.path:
 # Imports internos
 from services.dataframe_service import DataFrameService
 from services.preprocessing_service import PreprocessingService
-from services.mlflow_service import MLflowService
-
+from services.mlflow_service import MLFlowService
 from pipeline.builder import PipelineBuilder
 from utils.feature_identifier import FeatureIdentifier
 from utils.loaders import make_loader
@@ -26,6 +26,8 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from torch.export import Dim
+
 from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
 
@@ -38,7 +40,7 @@ df_service  = DataFrameService() # Carregamento dos Dados
 pipeline_builder = PipelineBuilder() # Criação da pipeline de preprocessamento
 feature_identifier = FeatureIdentifier() # Identificação das features (categoricas e textuais)
 preprocessing_service  = PreprocessingService(pipeline_builder=pipeline_builder, feature_identifier=feature_identifier)
-mlflow_service = MLflowService(experiment_name="churn_prediction")
+mlflow_service = MLFlowService(experiment_name="churn_prediction")
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -155,24 +157,37 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
         val_loss = np.mean(val_losses)
 
-        
+        # Log epoch metrics
+        mlflow_service.log_metrics(
+            {
+                "train_loss": train_loss,
+                "val_loss": val_loss
+            },
+            step=epoch,
+        )
+
+        # mlflow_service.log_pytorch_model(model, name=f"checkpoint_{epoch}")
 
         print(f"Epoch {epoch} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
         # Early Stopping
         best_state = None
         if early_stopping.step(val_loss, model):
-            print(f"⛔ Early stopping na época {epoch}")
+            # print(f"⛔ Early stopping na época {epoch}")
             best_state    = {k: v.clone() for k, v in model.state_dict().items()}
             break
     
     model.load_state_dict(best_state)
+    mlflow_service.log_pytorch_model(model, name="final_model", export_model=False)
+
     return model
 
 def save_model(model):
 
-    torch.save(model.state_dict(), ARTIFACTS_DIR)
-    print(f"Modelo salvo em: {ARTIFACTS_DIR}")
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)  # Garante que o diretório existe
+    model_path = os.path.join(ARTIFACTS_DIR, "model.pth")
+    torch.save(model.state_dict(), model_path)
+    print(f"Modelo salvo em: {model_path}")
 
 def main():
     X_train, y_train, X_val_, y_val  = preprocessing()
@@ -180,9 +195,5 @@ def main():
     model = train_model(X_train, y_train, X_val_, y_val)
     save_model(model)
 
-    
-
-
-
-# Executa os fluxos
-main()
+if __name__ == "__main__":
+    main()

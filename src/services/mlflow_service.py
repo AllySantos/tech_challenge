@@ -1,10 +1,13 @@
+import warnings
+
 import mlflow
 import mlflow.pytorch
 
-class MLFlow:
-    def __init__(self, experiment_name: str, tracking_uri: str = "mlruns", enable_metrics = True):
+class MLFlowService:
+    def __init__(self, experiment_name: str, tracking_uri: str = "sqlite:///mlflow.db", enable_metrics = False):
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(experiment_name)
+        warnings.filterwarnings("ignore", category=FutureWarning, module="mlflow")
 
         if enable_metrics:
             mlflow.config.enable_system_metrics_logging()
@@ -16,6 +19,7 @@ class MLFlow:
 
     def start_run(self, run_name: str) -> None:
         self._run = mlflow.start_run(run_name=run_name)
+        return self._run  # Retorna o gerenciador de contexto
 
     def end_run(self) -> None:
         mlflow.end_run()
@@ -36,13 +40,13 @@ class MLFlow:
 
         mlflow.log_metrics(numeric, step=step)
 
-    def log_artifact(self, local_path: str, artifact_path: str | None = None) -> None:
-        mlflow.log_artifact(local_path, artifact_path)
+    def log_artifact(self, local_path: str, name: str | None = None) -> None:
+        mlflow.log_artifact(local_path, name)
 
     # ── Modelos ───────────────────────────────────────────────────────────────
 
-    def log_sklearn_model(self, model, artifact_path: str = "model") -> None:
-        mlflow.sklearn.log_model(model, artifact_path)
+    def log_sklearn_model(self, model, name) -> None:
+        mlflow.sklearn.log_model(model, name)
 
-    def log_pytorch_model(self, model, artifact_path: str = "model") -> None:
-        mlflow.pytorch.log_model(model, artifact_path)
+    def log_pytorch_model(self, model, name, export_model = False, **kwargs) -> None:
+        mlflow.pytorch.log_model(model, name=name, export_model=export_model, **kwargs)
