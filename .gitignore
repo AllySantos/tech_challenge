@@ -8,6 +8,7 @@ data/processed/*.parquet
 models/*.pth
 models/*.pkl
 models/*.onnx
+notebooks/*.pth
 
 # MLflow — ignorar em qualquer subdiretório
 **/mlflow.db

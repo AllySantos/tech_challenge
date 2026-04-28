@@ -29,7 +29,7 @@ run:
 
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5000"
-	@.venv/bin/mlflow ui --backend-store-uri notebooks/mlruns --port 5000
+	@.venv/bin/mlflow ui --backend-store-uri sqlite:///notebooks/mlflow.db --port 5000
 
 clean:
 	@rm -rf .venv __pycache__ src/__pycache__ .pytest_cache .ruff_cache
