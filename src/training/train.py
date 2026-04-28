@@ -65,6 +65,8 @@ log_params = {
     "dropout": DROPOUT
 }
 
+import joblib
+
 def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
 
     # Carregameno dos dados
@@ -88,13 +90,19 @@ def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     # Executa pipeline de preprocessamento de validação (transfom)
     X_val_proc  = preprocessing_service.run_pipeline(X_val,  type=DatasetType.VALIDATION)
 
-    return X_train_proc, y_train, X_val_proc, y_val   
+    # Salva pipeline ajustado para uso em produção (API de inferência)
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+    pipeline_path = os.path.join(ARTIFACTS_DIR, "pipeline.pkl")
+    joblib.dump(preprocessing_service.pipeline, pipeline_path)
+    print(f"Pipeline salvo em: {pipeline_path}")
+
+    return X_train_proc, y_train, X_val_proc, y_val
 
 def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
-    # Instaciação do Modelo 
+    # Instaciação do Modelo
     num_cols = X_train.shape[1]
-    model = ChurnMLP(input_dim=num_cols, dropout=0.3)
+    model = ChurnMLP(input_dim=num_cols, dropout=0.3).to(DEVICE)
 
     # Criação de loaders 
     train_loader = make_loader(X_train, y_train, shuffle=True)
@@ -114,6 +122,7 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
     # Instancia Early Stopping
     early_stopping = EarlyStopping(patience = PATIENCE)
+    best_state = None  # rastreia melhor estado fora do loop
 
     # Inicia Run
     mlflow_service.start_run(run_name="train_model")
@@ -171,13 +180,14 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
         print(f"Epoch {epoch} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
         # Early Stopping
-        best_state = None
         if early_stopping.step(val_loss, model):
-            # print(f"⛔ Early stopping na época {epoch}")
-            best_state    = {k: v.clone() for k, v in model.state_dict().items()}
+            print(f"Early stopping na epoca {epoch}")
+            best_state = {k: v.clone() for k, v in early_stopping.best_model.items()}
             break
-    
-    model.load_state_dict(best_state)
+        best_state = {k: v.clone() for k, v in model.state_dict().items()}
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
     mlflow_service.log_pytorch_model(model, name="final_model", export_model=False)
 
     return model

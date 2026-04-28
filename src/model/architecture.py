@@ -25,11 +25,10 @@ class ChurnMLP(nn.Module):
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Dropout(dropout),
-            # Saída
+            # Saída — sem Sigmoid: BCEWithLogitsLoss aplica internamente
             nn.Linear(64, 1),
-            nn.Sigmoid(),
       )
- 
+
     def forward(self, x):
         return self.net(x).squeeze(1)
     

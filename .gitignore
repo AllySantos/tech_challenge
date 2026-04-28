@@ -9,9 +9,9 @@ models/*.pth
 models/*.pkl
 models/*.onnx
 
-# MLflow
-mlflow.db
-mlruns/
+# MLflow — ignorar em qualquer subdiretório
+**/mlflow.db
+**/mlruns/
 
 # Mac OS-specific storage files
 .DS_Store
