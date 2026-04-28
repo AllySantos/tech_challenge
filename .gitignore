@@ -1,5 +1,17 @@
-# Data
-/data/
+# Data — nunca commitar dados brutos grandes
+data/raw/*.csv
+data/raw/*.parquet
+data/processed/*.csv
+data/processed/*.parquet
+
+# Modelos treinados (usar MLflow em vez disso)
+models/*.pth
+models/*.pkl
+models/*.onnx
+
+# MLflow
+mlflow.db
+mlruns/
 
 # Mac OS-specific storage files
 .DS_Store
