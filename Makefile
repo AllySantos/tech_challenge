@@ -5,6 +5,8 @@ install:
 	@python3 -m venv .venv
 	@echo "Installing requirements..."
 	@.venv/bin/pip install -q -r requirements.txt
+	@echo "Configuring nbstripout (strip notebook outputs on commit)..."
+	@.venv/bin/nbstripout --install
 	@echo "Done! Activate with: source .venv/bin/activate"
 
 train:

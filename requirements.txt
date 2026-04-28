@@ -27,3 +27,4 @@ pytest>=7.4.0
 ruff>=0.1.0
 jupyter>=1.0.0
 ipykernel>=6.25.0
+nbstripout>=0.7.0
