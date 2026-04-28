@@ -1,5 +1,5 @@
-import torch
 import torch.nn as nn
+
 
 class ChurnMLP(nn.Module):
     """

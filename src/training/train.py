@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-
 SRC_DIR = Path(__file__).resolve().parent.parent
 print(f"SRC_DIR: {SRC_DIR}")
 
@@ -12,25 +11,22 @@ if str(SRC_DIR) not in sys.path:
 # ----------------------------------------------------------- #
 
 # Imports internos
-from services.dataframe_service import DataFrameService
-from services.preprocessing_service import PreprocessingService
-from services.mlflow_service import MLFlowService
-from pipeline.builder import PipelineBuilder
-from utils.feature_identifier import FeatureIdentifier
-from utils.loaders import make_loader
-from enums.dataset_type import DatasetType
-from model.architecture import ChurnMLP, EarlyStopping
-
 # Imports externos
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.export import Dim
-
-from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
 
+from enums.dataset_type import DatasetType
+from model.architecture import ChurnMLP, EarlyStopping
+from pipeline.builder import PipelineBuilder
+from services.dataframe_service import DataFrameService
+from services.mlflow_service import MLFlowService
+from services.preprocessing_service import PreprocessingService
+from utils.feature_identifier import FeatureIdentifier
+from utils.loaders import make_loader
 
 # Carregamento de varaveis e instanciação de serviços
 
@@ -67,10 +63,12 @@ log_params = {
 
 import joblib
 
+
 def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
 
     # Carregameno dos dados
-    df = df_service.load_dataframe(os.getenv("PREPROCESSING_FILE_PATH"))
+    _default_path = "data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv"
+    df = df_service.load_dataframe(os.getenv("PREPROCESSING_FILE_PATH", _default_path))
     y = (df["Churn"] == "Yes").astype(int)
     X = df.drop(columns=["Churn", "customerID"])
 

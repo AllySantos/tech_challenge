@@ -29,9 +29,9 @@ run:
 
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5001"
-	@.venv/bin/mlflow ui --backend-store-uri sqlite:///notebooks/mlflow.db --port 5001
+	@.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001
 
 clean:
-	@rm -rf .venv __pycache__ src/__pycache__ .pytest_cache .ruff_cache
+	@rm -rf .venv __pycache__ src/__pycache__ .pytest_cache .ruff_cache mlflow.db
 	@find . -name "*.pyc" -delete
 	@echo "Cleaned."

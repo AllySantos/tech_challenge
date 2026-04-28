@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class FeatureIdentifier:
     @staticmethod
     def get_features(df: pd.DataFrame) -> tuple:

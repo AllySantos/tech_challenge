@@ -3,7 +3,6 @@ import os
 import sys
 from pathlib import Path
 
-
 SRC_DIR = Path(__file__).resolve().parent.parent
 print(f"SRC_DIR: {SRC_DIR}")
 
@@ -13,22 +12,24 @@ if str(SRC_DIR) not in sys.path:
 # ----------------------------------------------------------- #
 
 
-import torch
-import pandas as pd
 import numpy as np
-
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score,
-    f1_score, roc_auc_score, confusion_matrix, ConfusionMatrixDisplay,
-)
+import pandas as pd
+import torch
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from services.mlflow_service import MLFlowService
-from utils.loaders import load_model
 from training.train import preprocessing
+from utils.loaders import load_model
 
 mlflow_service = MLFlowService(experiment_name="churn-prediction-baseline-comparison")
 
