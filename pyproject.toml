@@ -9,6 +9,7 @@ description = "Churn prediction MLP — FIAP Pós Tech ML Grupo 102"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 
@@ -21,3 +22,4 @@ select = ["E", "F", "I"]
 # E402: import-not-at-top — training scripts manipulam sys.path antes dos imports internos
 # E731: lambda-assignment — usado pontualmente em loaders
 ignore = ["E501", "E402", "E731"]
+
