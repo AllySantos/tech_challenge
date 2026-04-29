@@ -34,13 +34,14 @@ cd tech_challenge
 git checkout setup/project-organization
 ```
 
-**Coloque o dataset em `data/raw/`:**
+**Baixe o dataset diretamente pelo terminal:**
 
-```
-data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv
+```bash
+curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv \
+  https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
 ```
 
-> Peça o arquivo no grupo ou baixe no [Kaggle](https://www.kaggle.com/datasets/blastchar/telco-customer-churn).
+> Sem terminal ou no Windows: [download direto aqui](https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv) — salve como `WA_Fn-UseC_-Telco-Customer-Churn.csv` dentro de `data/raw/`.
 
 ---
 
