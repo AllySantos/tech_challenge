@@ -121,6 +121,7 @@ tech_challenge/
 │   ├── 01_eda_baseline.ipynb       # Etapa 1 — EDA e baselines
 │   └── 02_mlp_pytorch.ipynb        # Etapa 2 — MLP PyTorch
 ├── src/
+│   ├── app/                        # Etapa 3 — FastAPI + rotas + pré-processamento para inferência
 │   ├── model/
 │   │   ├── architecture.py         # ChurnMLP: Input→256→128→64→1
 │   │   └── artifacts/              # model.pth + pipeline.pkl (gerados pelo treino)
@@ -130,7 +131,6 @@ tech_challenge/
 │   │   ├── train.py                # Loop de treino + early stopping + MLflow
 │   │   └── evaluate.py             # Baselines + comparação + análise de threshold
 │   └── utils/                      # Loaders, encoders, feature_identifier
-├── tests/                          # Testes automatizados (Etapa 3)
 ├── docs/                           # Model Card, arquitetura (Etapa 4)
 ├── .gitattributes                  # Remove outputs de notebooks no commit (nbstripout)
 ├── Makefile
