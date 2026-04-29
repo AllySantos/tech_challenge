@@ -11,7 +11,9 @@ class PreprocessingService:
         self.pipeline_builder = pipeline_builder
         self.pipeline = None
 
-    def run_pipeline(self, df: pd.DataFrame, type: DatasetType = DatasetType.TRAIN, target = None) -> pd.DataFrame:
+    def run_pipeline(
+        self, df: pd.DataFrame, type: DatasetType = DatasetType.TRAIN, target=None
+    ) -> pd.DataFrame:
         df = self.__remove_non_predictable_features(df)
 
         if type == DatasetType.TRAIN:
@@ -29,7 +31,7 @@ class PreprocessingService:
                     "Chame run_pipeline com DatasetType.TRAIN antes de val/test."
                 )
             transformed = self.pipeline.transform(df)
- 
+
         return pd.DataFrame(transformed, index=df.index)
 
     def __remove_non_predictable_features(self, df: pd.DataFrame, features=None) -> pd.DataFrame:
