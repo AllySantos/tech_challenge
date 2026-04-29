@@ -23,7 +23,7 @@ lint:
 
 test:
 	@echo "Running tests..."
-	@.venv/bin/pytest tests/ -v
+	@pytest src/tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=80
 
 run:
 	@echo "Starting API at http://localhost:8000"
