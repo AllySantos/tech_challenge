@@ -27,7 +27,7 @@ test:
 
 run:
 	@echo "Starting API at http://localhost:8000"
-	@cd src && ../.venv/bin/uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+	@uvicorn app.main:app --reload --app-dir src
 
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5001"
