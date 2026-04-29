@@ -8,8 +8,9 @@ import mlflow.pytorch
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_URI = f"sqlite:///{_PROJECT_ROOT / 'mlflow.db'}"
 
+
 class MLFlowService:
-    def __init__(self, experiment_name: str, tracking_uri: str = None, enable_metrics = False):
+    def __init__(self, experiment_name: str, tracking_uri: str = None, enable_metrics=False):
         mlflow.set_tracking_uri(tracking_uri or _DEFAULT_URI)
         mlflow.set_experiment(experiment_name)
         warnings.filterwarnings("ignore", category=FutureWarning, module="mlflow")
@@ -17,7 +18,7 @@ class MLFlowService:
         if enable_metrics:
             mlflow.config.enable_system_metrics_logging()
             mlflow.config.set_system_metrics_sampling_interval(1)
-        
+
         self._run = None
 
     # ── Ciclo de vida do run ──────────────────────────────────────────────────
@@ -53,5 +54,5 @@ class MLFlowService:
     def log_sklearn_model(self, model, name) -> None:
         mlflow.sklearn.log_model(model, name)
 
-    def log_pytorch_model(self, model, name, export_model = False, **kwargs) -> None:
+    def log_pytorch_model(self, model, name, export_model=False, **kwargs) -> None:
         mlflow.pytorch.log_model(model, name=name, export_model=export_model, **kwargs)

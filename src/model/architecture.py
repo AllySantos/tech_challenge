@@ -10,7 +10,7 @@ class ChurnMLP(nn.Module):
     def __init__(self, input_dim: int, dropout: float = 0.3):
         super().__init__()
         self.net = nn.Sequential(
-                 # Camada 1
+            # Camada 1
             nn.Linear(input_dim, 256),
             nn.BatchNorm1d(256),
             nn.ReLU(),
@@ -27,11 +27,12 @@ class ChurnMLP(nn.Module):
             nn.Dropout(dropout),
             # Saída — sem Sigmoid: BCEWithLogitsLoss aplica internamente
             nn.Linear(64, 1),
-      )
+        )
 
     def forward(self, x):
         return self.net(x).squeeze(1)
-    
+
+
 class EarlyStopping:
     def __init__(self, patience=5, min_delta=0):
         self.patience = patience

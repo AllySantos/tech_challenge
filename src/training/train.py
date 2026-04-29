@@ -32,10 +32,12 @@ from utils.loaders import make_loader
 
 load_dotenv()
 
-df_service  = DataFrameService() # Carregamento dos Dados
-pipeline_builder = PipelineBuilder() # Criação da pipeline de preprocessamento
-feature_identifier = FeatureIdentifier() # Identificação das features (categoricas e textuais)
-preprocessing_service  = PreprocessingService(pipeline_builder=pipeline_builder, feature_identifier=feature_identifier)
+df_service = DataFrameService()  # Carregamento dos Dados
+pipeline_builder = PipelineBuilder()  # Criação da pipeline de preprocessamento
+feature_identifier = FeatureIdentifier()  # Identificação das features (categoricas e textuais)
+preprocessing_service = PreprocessingService(
+    pipeline_builder=pipeline_builder, feature_identifier=feature_identifier
+)
 mlflow_service = MLFlowService(experiment_name="churn_prediction")
 
 
@@ -58,7 +60,7 @@ log_params = {
     "weight_decay": WEIGHT_DECAY,
     "learning_rate": LEARNING_RATE,
     "patience": PATIENCE,
-    "dropout": DROPOUT
+    "dropout": DROPOUT,
 }
 
 import joblib
@@ -86,7 +88,7 @@ def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     X_train_proc = preprocessing_service.run_pipeline(X_train, type=DatasetType.TRAIN)
 
     # Executa pipeline de preprocessamento de validação (transfom)
-    X_val_proc  = preprocessing_service.run_pipeline(X_val,  type=DatasetType.VALIDATION)
+    X_val_proc = preprocessing_service.run_pipeline(X_val, type=DatasetType.VALIDATION)
 
     # Salva pipeline ajustado para uso em produção (API de inferência)
     os.makedirs(ARTIFACTS_DIR, exist_ok=True)
@@ -96,15 +98,16 @@ def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
 
     return X_train_proc, y_train, X_val_proc, y_val
 
+
 def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
     # Instaciação do Modelo
     num_cols = X_train.shape[1]
     model = ChurnMLP(input_dim=num_cols, dropout=0.3).to(DEVICE)
 
-    # Criação de loaders 
+    # Criação de loaders
     train_loader = make_loader(X_train, y_train, shuffle=True)
-    validation_loader = make_loader(X_val, y_val,shuffle=False)
+    validation_loader = make_loader(X_val, y_val, shuffle=False)
 
     # Peso do erro
     positive_weight_val = (y_train == 0).sum() / (y_train == 1).sum()
@@ -119,7 +122,7 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=weight_decay, lr=learning_rate)
 
     # Instancia Early Stopping
-    early_stopping = EarlyStopping(patience = PATIENCE)
+    early_stopping = EarlyStopping(patience=PATIENCE)
     best_state = None  # rastreia melhor estado fora do loop
 
     # Inicia Run
@@ -142,18 +145,16 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
             # Gradient clipping: evita explosão de gradientes
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            
+
             optimizer.step()
-            
+
             train_losses.append(loss.item())
 
         train_loss = np.mean(train_losses)
 
-
         # Validação
         model.eval()
         val_losses = []
-
 
         with torch.no_grad():
             for xb, yb in validation_loader:
@@ -166,10 +167,7 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
         # Log epoch metrics
         mlflow_service.log_metrics(
-            {
-                "train_loss": train_loss,
-                "val_loss": val_loss
-            },
+            {"train_loss": train_loss, "val_loss": val_loss},
             step=epoch,
         )
 
@@ -190,6 +188,7 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
     return model
 
+
 def save_model(model):
 
     os.makedirs(ARTIFACTS_DIR, exist_ok=True)  # Garante que o diretório existe
@@ -197,11 +196,13 @@ def save_model(model):
     torch.save(model.state_dict(), model_path)
     print(f"Modelo salvo em: {model_path}")
 
+
 def main():
-    X_train, y_train, X_val_, y_val  = preprocessing()
-    
+    X_train, y_train, X_val_, y_val = preprocessing()
+
     model = train_model(X_train, y_train, X_val_, y_val)
     save_model(model)
+
 
 if __name__ == "__main__":
     main()
