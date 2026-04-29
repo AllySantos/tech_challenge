@@ -31,7 +31,6 @@ Rede neural (MLP com PyTorch) para prever cancelamento de clientes de uma operad
 ```bash
 git clone https://github.com/AllySantos/tech_challenge.git
 cd tech_challenge
-git checkout setup/project-organization
 ```
 
 **Baixe o dataset diretamente pelo terminal:**
