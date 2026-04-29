@@ -1,11 +1,16 @@
 import warnings
+from pathlib import Path
 
 import mlflow
 import mlflow.pytorch
 
+# Raiz do projeto: src/services/../../ = project root
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_DEFAULT_URI = f"sqlite:///{_PROJECT_ROOT / 'mlflow.db'}"
+
 class MLFlowService:
-    def __init__(self, experiment_name: str, tracking_uri: str = "sqlite:///mlflow.db", enable_metrics = False):
-        mlflow.set_tracking_uri(tracking_uri)
+    def __init__(self, experiment_name: str, tracking_uri: str = None, enable_metrics = False):
+        mlflow.set_tracking_uri(tracking_uri or _DEFAULT_URI)
         mlflow.set_experiment(experiment_name)
         warnings.filterwarnings("ignore", category=FutureWarning, module="mlflow")
 

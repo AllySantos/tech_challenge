@@ -1,13 +1,10 @@
 import pickle
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+
 from model.architecture import ChurnMLP
-
-
-
 
 ARTIFACTS_DIR = Path(__file__).parent.parent  /  "model" / "artifacts"
 

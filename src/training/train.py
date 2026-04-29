@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-
 SRC_DIR = Path(__file__).resolve().parent.parent
 print(f"SRC_DIR: {SRC_DIR}")
 
@@ -12,25 +11,22 @@ if str(SRC_DIR) not in sys.path:
 # ----------------------------------------------------------- #
 
 # Imports internos
-from services.dataframe_service import DataFrameService
-from services.preprocessing_service import PreprocessingService
-from services.mlflow_service import MLFlowService
-from pipeline.builder import PipelineBuilder
-from utils.feature_identifier import FeatureIdentifier
-from utils.loaders import make_loader
-from enums.dataset_type import DatasetType
-from model.architecture import ChurnMLP, EarlyStopping
-
 # Imports externos
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.export import Dim
-
-from sklearn.model_selection import train_test_split
 from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
 
+from enums.dataset_type import DatasetType
+from model.architecture import ChurnMLP, EarlyStopping
+from pipeline.builder import PipelineBuilder
+from services.dataframe_service import DataFrameService
+from services.mlflow_service import MLFlowService
+from services.preprocessing_service import PreprocessingService
+from utils.feature_identifier import FeatureIdentifier
+from utils.loaders import make_loader
 
 # Carregamento de varaveis e instanciação de serviços
 
@@ -65,10 +61,14 @@ log_params = {
     "dropout": DROPOUT
 }
 
+import joblib
+
+
 def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
 
     # Carregameno dos dados
-    df = df_service.load_dataframe(os.getenv("PREPROCESSING_FILE_PATH"))
+    _default_path = "data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv"
+    df = df_service.load_dataframe(os.getenv("PREPROCESSING_FILE_PATH", _default_path))
     y = (df["Churn"] == "Yes").astype(int)
     X = df.drop(columns=["Churn", "customerID"])
 
@@ -88,13 +88,19 @@ def preprocessing() -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     # Executa pipeline de preprocessamento de validação (transfom)
     X_val_proc  = preprocessing_service.run_pipeline(X_val,  type=DatasetType.VALIDATION)
 
-    return X_train_proc, y_train, X_val_proc, y_val   
+    # Salva pipeline ajustado para uso em produção (API de inferência)
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+    pipeline_path = os.path.join(ARTIFACTS_DIR, "pipeline.pkl")
+    joblib.dump(preprocessing_service.pipeline, pipeline_path)
+    print(f"Pipeline salvo em: {pipeline_path}")
+
+    return X_train_proc, y_train, X_val_proc, y_val
 
 def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
-    # Instaciação do Modelo 
+    # Instaciação do Modelo
     num_cols = X_train.shape[1]
-    model = ChurnMLP(input_dim=num_cols, dropout=0.3)
+    model = ChurnMLP(input_dim=num_cols, dropout=0.3).to(DEVICE)
 
     # Criação de loaders 
     train_loader = make_loader(X_train, y_train, shuffle=True)
@@ -114,6 +120,7 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
 
     # Instancia Early Stopping
     early_stopping = EarlyStopping(patience = PATIENCE)
+    best_state = None  # rastreia melhor estado fora do loop
 
     # Inicia Run
     mlflow_service.start_run(run_name="train_model")
@@ -171,13 +178,14 @@ def train_model(X_train, y_train, X_val, y_val, epochs=EPOCHS):
         print(f"Epoch {epoch} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
         # Early Stopping
-        best_state = None
         if early_stopping.step(val_loss, model):
-            # print(f"⛔ Early stopping na época {epoch}")
-            best_state    = {k: v.clone() for k, v in model.state_dict().items()}
+            print(f"Early stopping na epoca {epoch}")
+            best_state = {k: v.clone() for k, v in early_stopping.best_model.items()}
             break
-    
-    model.load_state_dict(best_state)
+        best_state = {k: v.clone() for k, v in model.state_dict().items()}
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
     mlflow_service.log_pytorch_model(model, name="final_model", export_model=False)
 
     return model

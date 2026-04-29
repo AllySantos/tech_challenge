@@ -1,5 +1,6 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 
 class DataFrameService:
@@ -14,7 +15,9 @@ class DataFrameService:
             current_dir = Path(__file__).parent.parent.parent  # tech_challenge
             file_path = current_dir / path if not Path(path).is_absolute() else Path(path)
             
-            df = pd.read_csv(file_path, index_col=0)
+            df = pd.read_csv(file_path)
+            if "TotalCharges" in df.columns:
+                df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
             return df
         except Exception as e:
             print(f"Erro ao carregar o DataFrame: {e}")
