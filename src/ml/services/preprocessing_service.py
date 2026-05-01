@@ -1,8 +1,8 @@
 import pandas as pd
 
-from enums.dataset_type import DatasetType
-from pipeline.builder import PipelineBuilder
-from utils.feature_identifier import FeatureIdentifier
+from ml.enums.dataset_type import DatasetType
+from ml.pipeline.builder import PipelineBuilder
+from ml.utils.feature_identifier import FeatureIdentifier
 
 
 class PreprocessingService:

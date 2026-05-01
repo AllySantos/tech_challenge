@@ -2,7 +2,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from utils.encoders import CustomLabelEncoder
+from ml.utils.encoders import CustomLabelEncoder
 
 
 class PipelineBuilder:

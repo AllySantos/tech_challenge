@@ -223,6 +223,12 @@ dependencies = [
 pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+addopts = "--ignore=data --ignore=notebooks --ignore-glob='src/ml/*'"
+
+[tool.coverage.run]
+omit = [
+    "src/ml/*"
+]
 
 [tool.ruff]
 line-length = 100
