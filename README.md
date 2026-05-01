@@ -69,7 +69,7 @@ source .venv/bin/activate
 # Windows (Git Bash)
 source .venv/Scripts/activate
 
-pip install -r requirements.txt
+pip install -e .
 nbstripout --install
 ```
 
@@ -102,7 +102,7 @@ Acesse: http://localhost:5001
 
 | Comando | Equivalente manual |
 |---|---|
-| `make install` | `python3 -m venv .venv && pip install -r requirements.txt && nbstripout --install` |
+| `make install` | `python3 -m venv .venv && pip install -q --upgrade pip setuptools wheel && pip install -e . && nbstripout --install` |
 | `make train` | `cd src && python training/train.py` |
 | `make evaluate` | `cd src && python training/evaluate.py` |
 | `make lint` | `ruff check src/ tests/` |
@@ -134,8 +134,7 @@ tech_challenge/
 ├── docs/                           # Model Card, arquitetura (Etapa 4)
 ├── .gitattributes                  # Remove outputs de notebooks no commit (nbstripout)
 ├── Makefile
-├── pyproject.toml
-└── requirements.txt
+└── pyproject.toml
 ```
 
 ---
