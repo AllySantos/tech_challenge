@@ -30,17 +30,21 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          ruff check .
-          ruff format --check .
+          ruff check src/ tests/
+
+      - name: Format with Ruff
+        run: |
+          ruff format --check src/ tests/
 
       - name: Run Unit Tests & Enforce 80% Coverage for API
         run: |
-          pytest src/tests/unit \
+          pytest tests/unit \
             --cov=src \
             --cov-report=term-missing \
             --cov-report=xml \
-            --cov-fail-under=80
+            --cov-fail-under=80 \
+            -v
 
       - name: Run Smoke / E2E Tests
         run: |
-          pytest src/tests/e2e -v
+          pytest tests/e2e -v

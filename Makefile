@@ -12,24 +12,36 @@ install:
 	@echo "Done! Activate with: source .venv/bin/activate"
 
 train:
+	@echo "Fetching data..."
+	@curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv   https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
 	@echo "Training model..."
-	@cd src && ../.venv/bin/python training/train.py
+	@.venv/bin/python src/ml/train.py
 
 evaluate:
+	@echo "Fetching data..."
+	@curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv   https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
 	@echo "Evaluating model..."
-	@cd src && ../.venv/bin/python training/evaluate.py
+	@.venv/bin/python src/ml/evaluate.py
 
 lint:
 	@echo "Linting..."
 	@.venv/bin/ruff check src/ tests/
 
+format:
+	@echo "Linting..."
+	@.venv/bin/ruff format --check src/ tests/
+
 test:
 	@echo "Running tests..."
-	@pytest src/tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+	@.venv/bin/pytest tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=80 -v
+
+e2e:
+	@echo "Running tests..."
+	@.venv/bin/pytest tests/e2e -v
 
 run:
 	@echo "Starting API at http://localhost:8000"
-	@uvicorn app.main:app --reload --app-dir src
+	@.venv/bin/uvicorn app.main:app --reload --app-dir src
 
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5001"

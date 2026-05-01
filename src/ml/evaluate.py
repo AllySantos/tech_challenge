@@ -2,11 +2,11 @@ import os
 import sys
 from pathlib import Path
 
-SRC_DIR = Path(__file__).resolve().parent.parent
-print(f"SRC_DIR: {SRC_DIR}")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+print(f"REPO_ROOT: {REPO_ROOT}")
 
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # ----------------------------------------------------------- #
 
@@ -26,16 +26,17 @@ from sklearn.metrics import (
 )
 from sklearn.tree import DecisionTreeClassifier
 
-from services.mlflow_service import MLFlowService
-from training.train import preprocessing
-from utils.loaders import load_model
+from ml.services.mlflow_service import MLFlowService
+from ml.train import preprocessing
+from ml.utils.loaders import load_model
 
 mlflow_service = MLFlowService(experiment_name="churn-prediction-baseline-comparison")
 
 RANDOM_SEED = 42
 COST_FP = 50  # custo de uma campanha de retenção desnecessária (R$)
 COST_FN = 500  # receita perdida quando um churner não é detectado (R$)
-ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "model", "artifacts")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+ARTIFACTS_DIR = os.path.join(ROOT_DIR, "models")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 

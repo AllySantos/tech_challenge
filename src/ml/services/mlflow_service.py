@@ -4,7 +4,6 @@ from pathlib import Path
 import mlflow
 import mlflow.pytorch
 
-# Raiz do projeto: src/services/../../ = project root
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_URI = f"sqlite:///{_PROJECT_ROOT / 'mlflow.db'}"
 

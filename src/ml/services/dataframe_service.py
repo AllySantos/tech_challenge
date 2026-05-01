@@ -10,9 +10,8 @@ class DataFrameService:
     def load_dataframe(self, path: str) -> pd.DataFrame:
         """Carrega um DataFrame a partir de um arquivo CSV."""
         try:
-            # Resolve o caminho relativo a partir do diretório onde este arquivo está
-            current_dir = Path(__file__).parent.parent.parent  # tech_challenge
-            file_path = current_dir / path if not Path(path).is_absolute() else Path(path)
+            repo_root = Path(__file__).resolve().parents[3]
+            file_path = repo_root / path if not Path(path).is_absolute() else Path(path)
 
             df = pd.read_csv(file_path)
             if "TotalCharges" in df.columns:

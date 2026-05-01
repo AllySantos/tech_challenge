@@ -6,17 +6,6 @@ Rede neural (MLP com PyTorch) para prever cancelamento de clientes de uma operad
 
 ---
 
-## Status do Projeto
-
-| Etapa | Descrição | Status |
-|-------|-----------|--------|
-| **Etapa 1** | EDA + ML Canvas + Baselines | ✅ Concluída |
-| **Etapa 2** | MLP PyTorch + MLflow + comparação de modelos | ✅ Concluída |
-| **Etapa 3** | API FastAPI + testes automatizados | 🔄 Em andamento |
-| **Etapa 4** | Model Card + documentação + vídeo STAR | ⏳ Pendente |
-
----
-
 ## Pré-requisitos
 
 - Python 3.11 ou superior
@@ -32,31 +21,26 @@ Rede neural (MLP com PyTorch) para prever cancelamento de clientes de uma operad
 git clone https://github.com/AllySantos/tech_challenge.git
 cd tech_challenge
 ```
-
-**Baixe o dataset diretamente pelo terminal:**
-
-```bash
-curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv \
-  https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
-```
-
-> Sem terminal ou no Windows: [download direto aqui](https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv) — salve como `WA_Fn-UseC_-Telco-Customer-Churn.csv` dentro de `data/raw/`.
-
 ---
 
-## Opção A — Via Makefile (Mac / Linux)
+## Comandos
 
 ```bash
-make install      # cria .venv e instala todas as dependências
-make train        # treina a MLP e salva o modelo
-make evaluate     # compara MLP vs baselines (LogReg, RF, GBM, DT)
-make lint         # verifica qualidade do código
-make mlflow-ui    # abre os experimentos em http://localhost:5001
+| Comando         | O que faz |
+|-----------------|-----------|
+| make install    | cria .venv e instala todas as dependências |
+| make train      | treina a MLP e salva o modelo |
+| make evaluate   | compara MLP vs baselines (LogReg, RF, GBM, DT) |
+| make lint       | verifica qualidade do código |
+| make format     | formata o código |
+| make test       | executa os testes |
+| make e2e        | executa testes de ponta a ponta |
+| make run          | inicia o servidor FastAPI |
+| make mlflow-ui    | abre a interface do MLflow |
+| make clean        | limpa arquivos gerados |
 ```
 
----
-
-## Opção B — Via Jupyter (qualquer SO)
+## Jupyter
 
 **1. Instale as dependências:**
 
@@ -96,19 +80,6 @@ Acesse: http://localhost:5001
 
 > **Mac:** a porta 5000 é reservada pelo sistema (AirPlay) — use 5001.
 
----
-
-## O que o `make` faz por baixo
-
-| Comando | Equivalente manual |
-|---|---|
-| `make install` | `python3 -m venv .venv && pip install -q --upgrade pip setuptools wheel && pip install -e . && nbstripout --install` |
-| `make train` | `cd src && python training/train.py` |
-| `make evaluate` | `cd src && python training/evaluate.py` |
-| `make lint` | `ruff check src/ tests/` |
-| `make mlflow-ui` | `mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001` |
-
----
 
 ## Estrutura do projeto
 
@@ -118,20 +89,12 @@ tech_challenge/
 │   ├── raw/                        # Dataset original (não commitado — coloque aqui)
 │   └── processed/                  # Dados pré-processados
 ├── notebooks/
-│   ├── 01_eda_baseline.ipynb       # Etapa 1 — EDA e baselines
-│   └── 02_mlp_pytorch.ipynb        # Etapa 2 — MLP PyTorch
+│   ├── 01_eda_baseline.ipynb       # EDA e baselines
+│   └── 02_mlp_pytorch.ipynb        # MLP PyTorch
 ├── src/
-│   ├── app/                        # Etapa 3 — FastAPI + rotas + pré-processamento para inferência
-│   ├── model/
-│   │   ├── architecture.py         # ChurnMLP: Input→256→128→64→1
-│   │   └── artifacts/              # model.pth + pipeline.pkl (gerados pelo treino)
-│   ├── pipeline/builder.py         # Pipeline sklearn (Label + OneHot + Scaler)
-│   ├── services/                   # MLflowService, DataFrameService, PreprocessingService
-│   ├── training/
-│   │   ├── train.py                # Loop de treino + early stopping + MLflow
-│   │   └── evaluate.py             # Baselines + comparação + análise de threshold
-│   └── utils/                      # Loaders, encoders, feature_identifier
-├── docs/                           # Model Card, arquitetura (Etapa 4)
+│   ├── app/                        # API em FastAPI
+│   ├── ml/                         # Recursos de ML (modelos, pipeline, treino)
+├── docs/                           # Model Card, arquitetura
 ├── .gitattributes                  # Remove outputs de notebooks no commit (nbstripout)
 ├── Makefile
 └── pyproject.toml
@@ -174,7 +137,7 @@ Linear(1)   → logit  [BCEWithLogitsLoss aplica sigmoid internamente]
 |------|----|--------|
 | Gabriel Furtado | 371440 | — |
 | Alícia Santos | 374128 | [@AllySantos](https://github.com/AllySantos) |
-| Rogerio Junior | — | [@nimesko](https://github.com/nimesko) |
+| Rogerio Junior | 370501 | [@nimesko](https://github.com/nimesko) |
 | Junior Silva | 374224 | — |
 | Diego Ribeiro | 370996 | [@diegowribeiro](https://github.com/diegowribeiro) |
 

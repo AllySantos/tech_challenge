@@ -2,11 +2,11 @@ import os
 import sys
 from pathlib import Path
 
-SRC_DIR = Path(__file__).resolve().parent.parent
-print(f"SRC_DIR: {SRC_DIR}")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+print(f"REPO_ROOT: {REPO_ROOT}")
 
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 # ----------------------------------------------------------- #
 
@@ -19,14 +19,14 @@ import torch.nn as nn
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 
-from enums.dataset_type import DatasetType
-from model.architecture import ChurnMLP, EarlyStopping
-from pipeline.builder import PipelineBuilder
-from services.dataframe_service import DataFrameService
-from services.mlflow_service import MLFlowService
-from services.preprocessing_service import PreprocessingService
-from utils.feature_identifier import FeatureIdentifier
-from utils.loaders import make_loader
+from ml.enums.dataset_type import DatasetType
+from ml.pipeline.builder import PipelineBuilder
+from ml.services.dataframe_service import DataFrameService
+from ml.services.mlflow_service import MLFlowService
+from ml.services.preprocessing_service import PreprocessingService
+from ml.utils.architecture import ChurnMLP, EarlyStopping
+from ml.utils.feature_identifier import FeatureIdentifier
+from ml.utils.loaders import make_loader
 
 # Carregamento de varaveis e instanciação de serviços
 
@@ -52,7 +52,8 @@ LEARNING_RATE = 1e-3
 PATIENCE = 10
 DROPOUT = 0.3
 
-ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "model", "artifacts")
+ROOT_DIR = Path(__file__).resolve().parents[2]
+ARTIFACTS_DIR = os.path.join(ROOT_DIR, "models")
 
 log_params = {
     "epochs": EPOCHS,

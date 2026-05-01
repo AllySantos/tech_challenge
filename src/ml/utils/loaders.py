@@ -4,9 +4,10 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from model.architecture import ChurnMLP
+from ml.utils.architecture import ChurnMLP
 
-ARTIFACTS_DIR = Path(__file__).parent.parent / "model" / "artifacts"
+ROOT_DIR = Path(__file__).resolve().parents[3]
+ARTIFACTS_DIR = ROOT_DIR / "models"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
