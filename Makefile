@@ -19,7 +19,7 @@ train:
 
 evaluate:
 	@echo "Fetching data..."
-	@curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv   https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+	@curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
 	@echo "Evaluating model..."
 	@.venv/bin/python src/ml/evaluate.py
 
