@@ -1,4 +1,4 @@
-name: Churn prediction MLP Pipeline
+name: Core Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: ["**"]
 
 jobs:
-  test-and-lint:
+  setup:
     runs-on: ubuntu-latest
     env:
       PYTHON_VERSION: "3.11"
@@ -24,9 +24,28 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install -e .
           pip install ruff pytest pytest-cov httpx
+
+  lint:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+          pip install ruff
 
       - name: Lint with Ruff
         run: |
@@ -36,7 +55,26 @@ jobs:
         run: |
           ruff format --check src/ tests/
 
-      - name: Run Unit Tests & Enforce 80% Coverage for API
+  unit-test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run Unit Tests
         run: |
           pytest tests/unit \
             --cov=src \
@@ -45,6 +83,81 @@ jobs:
             --cov-fail-under=80 \
             -v
 
+  e2e-test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+          pip install pytest httpx
+
       - name: Run Smoke / E2E Tests
         run: |
           pytest tests/e2e -v
+
+  ml-evaluation:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Download raw data
+        run: |
+          curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+
+      - name: Evaluate Model & Generate Metrics
+        run: |
+          echo "TODO: evaluate current metrics"
+          # python src/ml/evaluate.py
+
+      - name: Report Results to GitHub PR
+        if: always()
+        run: |
+          if [ -f metrics_report.md ]; then
+            cat metrics_report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+  deploy:
+    needs: [ml-evaluation, e2e-test, unit-test, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Deploy
+        run: |
+          echo "TODO: Deploying ..."

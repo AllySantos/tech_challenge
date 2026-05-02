@@ -10,7 +10,6 @@ if str(REPO_ROOT) not in sys.path:
 
 # ----------------------------------------------------------- #
 
-
 import numpy as np
 import pandas as pd
 import torch
@@ -26,6 +25,7 @@ from sklearn.metrics import (
 )
 from sklearn.tree import DecisionTreeClassifier
 
+from ml.entities.analysis import AnalysisResult
 from ml.services.mlflow_service import MLFlowService
 from ml.train import preprocessing
 from ml.utils.loaders import load_model
@@ -38,17 +38,18 @@ COST_FN = 500  # receita perdida quando um churner não é detectado (R$)
 ROOT_DIR = Path(__file__).resolve().parents[2]
 ARTIFACTS_DIR = os.path.join(ROOT_DIR, "models")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+MIN_F1 = 0.60
 
 
 def compute_metrics(y_true, y_proba, threshold=0.5) -> dict:
     y_pred = (y_proba >= threshold).astype(int)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred),
-        "f1": f1_score(y_true, y_pred),
-        "roc_auc": roc_auc_score(y_true, y_proba),
+        "accuracy": float(accuracy_score(y_true, y_pred)),
+        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "recall": float(recall_score(y_true, y_pred)),
+        "f1": float(f1_score(y_true, y_pred)),
+        "roc_auc": float(roc_auc_score(y_true, y_proba)),
         "custo_total": int(fp * COST_FP + fn * COST_FN),
         "fp": int(fp),
         "fn": int(fn),
@@ -84,6 +85,19 @@ def evaluate_baseline(name, clf, X_train, y_train, X_test, y_test, params=None):
 
     print_metrics(name, m)
     return m, proba
+
+
+def write_best_result(result: AnalysisResult):
+    with open("metrics_report.md", "w") as file:
+        file.write("## Evaluation Results\n")
+        file.write(f"**Target Accuracy:** `{MIN_F1 * 100}%`\n\n")
+        file.write("| Metric | Score |\n")
+        file.write("|--------|-------|\n")
+        file.write(f"| Accuracy | {result.accuracy:.2f} |\n")
+        file.write(f"| F1 Score | {result.f1:.2f} |\n")
+        file.write(f"| Cost | {result.cost:.2f} |\n")
+        file.write(f"| Precision | {result.precision:.2f} |\n")
+        file.write(f"| Recall | {result.recall:.2f} |\n")
 
 
 def main():
@@ -168,15 +182,33 @@ def main():
                 "custo": m["custo_total"],
                 "fp": m["fp"],
                 "fn": m["fn"],
+                "accuracy": m["accuracy"],
+                "f1": m["f1"],
             }
         )
     df_thresh = pd.DataFrame(rows)
     best = df_thresh.loc[df_thresh["custo"].idxmin()]
+
+    best_analysis = AnalysisResult(
+        recall=float(best.get("recall", 0)),
+        precision=float(best.get("precision", 0)),
+        cost=float(best.get("custo", 0)),
+        accuracy=float(best.get("accuracy", 0)),
+        f1=float(best.get("f1", 0)),
+    )
+    write_best_result(best_analysis)
     print(df_thresh.to_string(index=False))
     print(
         f"\n✅ Threshold ótimo: {best['threshold']:.2f}  "
         f"Recall={best['recall']:.3f}  Custo=R${best['custo']:,}"
     )
+
+    if best_analysis.f1 >= MIN_F1:
+        print(f"✅ SUCCESS: Model ({best_analysis.f1}) meets the requirements.")
+        sys.exit(0)
+    else:
+        print(f"❌ FAILURE: Model ({best_analysis.f1}) is below the {MIN_F1} threshold.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
