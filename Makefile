@@ -45,7 +45,7 @@ e2e:
 
 run:
 	@echo "Starting API at http://localhost:8000"
-	@.venv/bin/uvicorn app.main:app --reload --app-dir src
+	@MODEL_S3_URI=s3://churn-prediction-sagemaker-389502677472/models/model.tar.gz .venv/bin/uvicorn app.main:app --reload --app-dir src
 
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5001"
