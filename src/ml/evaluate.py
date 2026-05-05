@@ -27,7 +27,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from ml.entities.analysis import AnalysisResult
 from ml.services.mlflow_service import MLFlowService
-from ml.train import preprocessing
+from ml.train_previous import preprocessing
 from ml.utils.loaders import load_model
 
 mlflow_service = MLFlowService(experiment_name="churn-prediction-baseline-comparison")

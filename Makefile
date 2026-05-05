@@ -1,3 +1,7 @@
+-include .env
+
+export
+
 .PHONY: install train evaluate lint test run clean
 
 install:
@@ -46,6 +50,20 @@ run:
 mlflow-ui:
 	@echo "Starting MLflow UI at http://localhost:5001"
 	@.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001
+
+plan-aws:
+	@echo "Setting up AWS infrastructure..."
+	@cd src/infra && terraform init
+	@cd src/infra && terraform plan -out=tfplan
+	@echo "Review the plan above, then apply with make apply-aws-infra"
+
+build-aws:
+	@echo "Deploying AWS infrastructure..."
+	@cd src/infra && terraform apply -auto-approve
+
+destroy-aws:
+	@echo "Destroying AWS infrastructure..."
+	@cd src/infra && terraform destroy
 
 clean:
 	@rm -rf .venv __pycache__ src/__pycache__ .pytest_cache .ruff_cache mlflow.db

@@ -1,39 +1,46 @@
+import io
+import os
 import time
-from pathlib import Path
+from urllib.parse import urlparse
 
-import joblib
+import boto3
 import structlog
 import torch
 
 logger = structlog.get_logger()
 
 
-def load_machine_learning_model(model_path: str):
-    repo_root = Path(__file__).resolve().parents[3]
-    path = Path(model_path)
-    if not path.is_absolute():
-        path = repo_root / path
+def load_machine_learning_model():
+    model_path = os.getenv("MODEL_S3_URI")
 
-    if not path.exists() and path.suffix == ".pkl":
-        alt_path = path.with_suffix(".pth")
-        if alt_path.exists():
-            path = alt_path
+    if not model_path:
+        logger.warning("machine_learning_load_skipped", reason="MODEL_S3_URI_not_set")
+        return None
 
-    logger.info("machine_learning_start_load", {"model_path": str(path)})
+    logger.info("machine_learning_start_load", model_path=model_path)
+
     try:
         start_time = time.perf_counter()
-        if path.suffix in {".pth", ".pt"}:
-            model = torch.load(path, map_location="cpu")
-        else:
-            model = joblib.load(path)
-        process_time = time.perf_counter() - start_time
 
+        parsed_uri = urlparse(model_path)
+        bucket_name = parsed_uri.netloc
+        key = parsed_uri.path.lstrip("/")
+
+        s3_client = boto3.client("s3")
+        response = s3_client.get_object(Bucket=bucket_name, Key=key)
+
+        buffer = io.BytesIO(response["Body"].read())
+
+        model = torch.load(buffer, map_location="cpu")
+
+        process_time = time.perf_counter() - start_time
         logger.info(
             "machine_learning_loaded",
-            model_path=str(path),
+            model_path=str(model_path),
             duration_ms=round(process_time * 1000, 2),
         )
         return model
-    except Exception:
-        logger.exception("machine_learning_error_load", {"model_path": str(path)})
+
+    except Exception as e:
+        logger.exception("machine_learning_error_load", model_path=model_path, error=str(e))
         raise

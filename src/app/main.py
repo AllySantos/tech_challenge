@@ -17,7 +17,7 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    model = load_machine_learning_model("models/model.pth")
+    model = load_machine_learning_model()
 
     yield {"model": model}
 

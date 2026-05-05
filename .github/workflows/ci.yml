@@ -1,5 +1,17 @@
 name: Core Pipeline
 
+env:
+  AWS_REGION: us-east-1
+  APP_NAME: churn-prediction
+  ECR_REPOSITORY: churn-prediction
+  ECS_CLUSTER: churn-prediction-cluster
+  ECS_SERVICE: churn-prediction-service
+  ECS_TASK_FAMILY: churn-prediction-task
+  SAGEMAKER_ROLE_NAME: churn-prediction-sagemaker-role
+  SAGEMAKER_EXPERIMENT_NAME: churn-prediction-experiment
+  MLFLOW_TRACKING_SERVER_NAME: churn-prediction-tracking-server
+  TRAINING_INSTANCE_TYPE: ml.m5.large
+
 on:
   push:
     branches: ["main"]
@@ -7,29 +19,7 @@ on:
     branches: ["**"]
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: "3.11"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: "pip"
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -e .
-          pip install ruff pytest pytest-cov httpx
-
   lint:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -56,7 +46,6 @@ jobs:
           ruff format --check src/ tests/
 
   unit-test:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -84,7 +73,6 @@ jobs:
             -v
 
   e2e-test:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -106,58 +94,164 @@ jobs:
         run: |
           pytest tests/e2e -v
 
-  ml-evaluation:
-    needs: setup
+  app-deploy:
+    needs: [e2e-test, unit-test, lint]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          python-version: "3.11"
-          cache: "pip"
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/churn-prediction-github-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -e .
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Download raw data
-        run: |
-          curl -L -o data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Evaluate Model & Generate Metrics
-        run: |
-          echo "TODO: evaluate current metrics"
-          # python src/ml/evaluate.py
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.app
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:app-latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:app-${{ github.sha }}
 
-      - name: Report Results to GitHub PR
-        if: always()
+      - name: Download current ECS task definition
         run: |
-          if [ -f metrics_report.md ]; then
-            cat metrics_report.md >> $GITHUB_STEP_SUMMARY
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_FAMILY }} \
+            --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: churn-prediction
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:app-latest
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: false
+
+  ml-deploy:
+    needs: [e2e-test, unit-test, lint]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/churn-prediction-github-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.training
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training-latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training-${{ github.sha }}
+
+      - name: Resolve AWS configuration
+        run: |
+          set -euo pipefail
+
+          ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+          SAGEMAKER_ROLE_ARN=$(aws iam get-role \
+            --role-name "${{ env.SAGEMAKER_ROLE_NAME }}" \
+            --query 'Role.Arn' \
+            --output text)
+          MLFLOW_TRACKING_URI=$(aws sagemaker describe-mlflow-tracking-server \
+            --tracking-server-name "${{ env.MLFLOW_TRACKING_SERVER_NAME }}" \
+            --query 'TrackingServerUrl' \
+            --output text)
+          MLFLOW_TRACKING_SERVER_ARN=$(aws sagemaker describe-mlflow-tracking-server \
+            --tracking-server-name "${{ env.MLFLOW_TRACKING_SERVER_NAME }}" \
+            --query 'TrackingServerArn' \
+            --output text)
+
+          if [ -z "$SAGEMAKER_ROLE_ARN" ] || [ "$SAGEMAKER_ROLE_ARN" = "None" ] || [ "$SAGEMAKER_ROLE_ARN" = "null" ]; then
+            echo "Failed to resolve SAGEMAKER_ROLE_ARN from IAM role '${{ env.SAGEMAKER_ROLE_NAME }}'"
+            exit 1
           fi
 
-  deploy:
-    needs: [ml-evaluation, e2e-test, unit-test, lint]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          if [ -z "$MLFLOW_TRACKING_URI" ] || [ "$MLFLOW_TRACKING_URI" = "None" ] || [ "$MLFLOW_TRACKING_URI" = "null" ]; then
+            echo "Failed to resolve MLFLOW_TRACKING_URI from tracking server '${{ env.MLFLOW_TRACKING_SERVER_NAME }}'"
+            exit 1
+          fi
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
+          if [ -z "$MLFLOW_TRACKING_SERVER_ARN" ] || [ "$MLFLOW_TRACKING_SERVER_ARN" = "None" ] || [ "$MLFLOW_TRACKING_SERVER_ARN" = "null" ]; then
+            echo "Failed to resolve MLFLOW_TRACKING_SERVER_ARN from tracking server '${{ env.MLFLOW_TRACKING_SERVER_NAME }}'"
+            exit 1
+          fi
 
-      - name: Install dependencies
+          {
+            echo "ACCOUNT_ID=$ACCOUNT_ID"
+            echo "SAGEMAKER_ROLE_ARN=$SAGEMAKER_ROLE_ARN"
+            echo "SAGEMAKER_BUCKET=${{ env.APP_NAME }}-sagemaker-$ACCOUNT_ID"
+            echo "MLFLOW_ARTIFACTS_BUCKET=${{ env.APP_NAME }}-mlflow-artifacts-$ACCOUNT_ID"
+            echo "MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI"
+            echo "MLFLOW_TRACKING_SERVER_ARN=$MLFLOW_TRACKING_SERVER_ARN"
+            echo "MLFLOW_TRACKING_ARN=$MLFLOW_TRACKING_SERVER_ARN"
+          } >> "$GITHUB_ENV"
+
+      - name: Trigger SageMaker Training Job
         run: |
-          pip install --upgrade pip
-          pip install -e .
+          set -euo pipefail
 
-      - name: Deploy
-        run: |
-          echo "TODO: Deploying ..."
+          JOB_NAME="churn-training-${{ github.run_id }}-${{ github.run_attempt }}"
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training-${{ github.sha }}"
+
+          aws sagemaker create-training-job \
+            --training-job-name "$JOB_NAME" \
+            --algorithm-specification TrainingImage="$IMAGE_URI",TrainingInputMode=File \
+            --role-arn "$SAGEMAKER_ROLE_ARN" \
+            --resource-config InstanceType=${{ env.TRAINING_INSTANCE_TYPE }},InstanceCount=1,VolumeSizeInGB=30 \
+            --stopping-condition MaxRuntimeInSeconds=3600 \
+            --output-data-config S3OutputPath="s3://$SAGEMAKER_BUCKET/training-output" \
+            --environment "{
+              \"APP_NAME\":\"churn-prediction\",
+              \"SAGEMAKER_BUCKET\":\"${SAGEMAKER_BUCKET}\",
+              \"MLFLOW_ARTIFACTS_BUCKET\":\"${MLFLOW_ARTIFACTS_BUCKET}\",
+              \"SAGEMAKER_EXPERIMENT_NAME\":\"${{ env.SAGEMAKER_EXPERIMENT_NAME }}\",
+              \"MLFLOW_TRACKING_URI\":\"${MLFLOW_TRACKING_URI}\",
+              \"MLFLOW_TRACKING_SERVER_ARN\":\"${MLFLOW_TRACKING_SERVER_ARN}\",
+              \"MLFLOW_TRACKING_ARN\":\"${MLFLOW_TRACKING_ARN}\",
+              \"MLFLOW_TRACKING_SERVER_NAME\":\"${{ env.MLFLOW_TRACKING_SERVER_NAME }}\"
+            }"

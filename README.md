@@ -143,6 +143,28 @@ Linear(1)   → logit  [BCEWithLogitsLoss aplica sigmoid internamente]
 
 ---
 
+## Docker
+Instruções para rodar o projeto via docker:
+
+1. docker build -f Dockerfile.app . -t churn-prediction .
+2. docker run -p 8000:8000 churn-prediction:latest
+
+## AWS Setup
+Instruções para criar a infraestrutura na AWS usando Terraform e configurar as permissões necessárias para o deploy:
+
+1. Crie uma conta AWS
+2. Crie o arquivo .env na raiz do projeto com as seguintes variáveis:
+```
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+```
+3. Rode make `plan-aws` para ver os artefatos para criar
+4. Rode make `build-aws` para criar a infraestrutura na AWS
+
+## URL do projeto
+O projeto está disponível em http://churn-prediction-alb-1354522649.us-east-1.elb.amazonaws.com
+Temos o endpoint the health check em http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com/health
+
 ## Critérios de avaliação
 
 | Critério | Peso |
