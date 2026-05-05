@@ -116,7 +116,7 @@ def test_predict_churn_class_without_artifacts():
 
 @patch("app.utils.machine_learning.os.getenv")
 def test_load_machine_learning_model_no_env_var(mock_getenv):
-    mock_getenv.side_effect = _fake_getenv({"MODEL_S3_URI": None, "PIPELINE_S3_URI": None})
+    mock_getenv.side_effect = _fake_getenv({"MODEL_S3_URI": None})
 
     result = load_machine_learning_model()
 
@@ -130,7 +130,6 @@ def test_load_machine_learning_model_success_with_tar_package(mock_getenv, mock_
     mock_getenv.side_effect = _fake_getenv(
         {
             "MODEL_S3_URI": "s3://my-bucket/models/model.tar.gz",
-            "PIPELINE_S3_URI": None,
         }
     )
 
@@ -153,24 +152,12 @@ def test_load_machine_learning_model_success_with_tar_package(mock_getenv, mock_
 @patch("app.utils.machine_learning.boto3.client")
 @patch("app.utils.machine_learning.os.getenv")
 def test_load_machine_learning_model_non_package_requires_pipeline(mock_getenv, mock_boto_client):
-    mock_getenv.side_effect = _fake_getenv(
-        {
-            "MODEL_S3_URI": "s3://my-bucket/models/model.pth",
-            "PIPELINE_S3_URI": None,
-        }
-    )
-
-    mock_s3_instance = MagicMock()
-    mock_boto_client.return_value = mock_s3_instance
-
-    mock_body = MagicMock()
-    mock_body.read.return_value = _build_model_state_bytes()
-    mock_s3_instance.get_object.return_value = {"Body": mock_body}
+    mock_getenv.side_effect = _fake_getenv({"MODEL_S3_URI": "s3://my-bucket/models/model.pth"})
 
     with pytest.raises(RuntimeError) as excinfo:
         load_machine_learning_model()
 
-    assert "PIPELINE_S3_URI must be set" in str(excinfo.value)
+    assert "MODEL_S3_URI must point to a .tar.gz package" in str(excinfo.value)
 
 
 @patch("app.utils.machine_learning.boto3.client")
@@ -179,7 +166,6 @@ def test_load_machine_learning_model_s3_error(mock_getenv, mock_boto_client):
     mock_getenv.side_effect = _fake_getenv(
         {
             "MODEL_S3_URI": "s3://my-bucket/model.tar.gz",
-            "PIPELINE_S3_URI": None,
         }
     )
 

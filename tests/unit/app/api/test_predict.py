@@ -67,8 +67,36 @@ def test_predict_validation_error_for_invalid_value():
 
     response = client.post("/predict", json=invalid_payload)
 
-    assert response.status_code == 200
-    assert response.json() == {"error": "Input should be 'Female' or 'Male'"}
+    assert response.status_code == 400
+    assert response.json() == {"error": "gender: Input should be 'Female' or 'Male'"}
+
+
+def test_predict_returns_reason_for_malformed_json():
+    response = client.post(
+        "/predict",
+        data='{"gender": ',
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"].startswith("Malformed JSON:")
+
+
+def test_predict_returns_reason_for_missing_field():
+    payload = dict(SAMPLE_RECORD)
+    payload.pop("Contract")
+
+    response = client.post("/predict", json=payload)
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "Contract: Field required"}
+
+
+def test_predict_returns_reason_for_unknown_field():
+    response = client.post("/predict", json={**SAMPLE_RECORD, "invalidField": "value"})
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "invalidField: Extra inputs are not permitted"}
 
 
 def test_predict_accepts_blank_total_charges_as_zero():
@@ -85,11 +113,11 @@ def test_predict_returns_500_on_inference_error():
     with patch("app.api.predict.predict_churn_class", side_effect=RuntimeError("boom")):
         response = client.post("/predict", json=SAMPLE_RECORD)
 
-    assert response.status_code == 200
+    assert response.status_code == 500
     assert response.json() == {"error": "Prediction failed"}
 
 
-def test_predict_returns_503_when_model_missing():
+def test_predict_returns_500_when_model_missing():
     app_without_model = FastAPI()
 
     @app_without_model.middleware("http")
@@ -102,5 +130,5 @@ def test_predict_returns_503_when_model_missing():
 
     response = local_client.post("/predict", json=SAMPLE_RECORD)
 
-    assert response.status_code == 200
+    assert response.status_code == 500
     assert response.json() == {"error": "Model is not available"}

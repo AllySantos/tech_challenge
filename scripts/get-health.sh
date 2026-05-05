@@ -1,1 +1,1 @@
-curl -X GET "http://localhost:8000/health" -H "Content-Type: application/json"
+curl -X GET "http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com/health" -H "Content-Type: application/json"

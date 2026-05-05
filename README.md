@@ -166,7 +166,7 @@ AWS_SECRET_ACCESS_KEY=your_secret_access_key
 
 ## URL do projeto
 
-O projeto está disponível em http://churn-prediction-alb-1354522649.us-east-1.elb.amazonaws.com
+O projeto está disponível em http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com
 Temos o endpoint the health check em http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com/health
 
 ## Critérios de avaliação

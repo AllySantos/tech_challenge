@@ -259,8 +259,8 @@ def test_e2e_predict_endpoint_new_customer_case(predict_client):
 def test_e2e_predict_endpoint_invalid_enum_returns_error_payload(predict_client):
     response = predict_client.post("/predict", json={**SAMPLE_RECORD, "gender": "Other"})
 
-    assert response.status_code == 200
-    assert response.json() == {"error": "Input should be 'Female' or 'Male'"}
+    assert response.status_code == 400
+    assert response.json() == {"error": "gender: Input should be 'Female' or 'Male'"}
 
 
 def test_e2e_predict_endpoint_missing_field_returns_error_payload(predict_client):
@@ -268,5 +268,23 @@ def test_e2e_predict_endpoint_missing_field_returns_error_payload(predict_client
     payload.pop("Contract")
     response = predict_client.post("/predict", json=payload)
 
-    assert response.status_code == 200
-    assert response.json() == {"error": "Field required"}
+    assert response.status_code == 400
+    assert response.json() == {"error": "Contract: Field required"}
+
+
+def test_e2e_predict_endpoint_unknown_field_returns_error_payload(predict_client):
+    response = predict_client.post("/predict", json={**SAMPLE_RECORD, "invalidField": "value"})
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "invalidField: Extra inputs are not permitted"}
+
+
+def test_e2e_predict_endpoint_malformed_json_returns_error_payload(predict_client):
+    response = predict_client.post(
+        "/predict",
+        data='{"gender": ',
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"].startswith("Malformed JSON:")

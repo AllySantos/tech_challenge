@@ -17,4 +17,4 @@ def test_health_router_is_included():
 
 def test_predict_router_is_included():
     response = client.post("/predict")
-    assert response.status_code == 200
+    assert response.status_code == 400
