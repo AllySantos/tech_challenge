@@ -1,4 +1,4 @@
-curl -X POST "http://localhost:8000/predict" \
+curl -X POST "http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com/predict" \
   -H "Content-Type: application/json" \
   -d '[
     {

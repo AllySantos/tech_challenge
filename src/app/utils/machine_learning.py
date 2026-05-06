@@ -106,11 +106,15 @@ def _load_artifacts_from_tar_bytes(package_bytes: bytes) -> ModelArtifacts:
 
 def load_machine_learning_model():
     model_path = os.getenv("MODEL_S3_URI")
-    pipeline_path = os.getenv("PIPELINE_S3_URI")
 
     if not model_path:
         logger.warning("machine_learning_load_skipped", reason="MODEL_S3_URI_not_set")
         return None
+
+    if not model_path.endswith(".tar.gz"):
+        raise RuntimeError(
+            "MODEL_S3_URI must point to a .tar.gz package containing model.pth and pipeline.pkl"
+        )
 
     logger.info("machine_learning_start_load", model_path=model_path)
 
@@ -119,19 +123,7 @@ def load_machine_learning_model():
 
         s3_client = boto3.client("s3")
         model_bytes = _download_s3_object_bytes(s3_client, model_path)
-
-        if model_path.endswith(".tar.gz"):
-            model_artifacts = _load_artifacts_from_tar_bytes(model_bytes)
-        else:
-            if not pipeline_path:
-                raise RuntimeError(
-                    "PIPELINE_S3_URI must be set when MODEL_S3_URI is not a .tar.gz package"
-                )
-
-            pipeline_bytes = _download_s3_object_bytes(s3_client, pipeline_path)
-            model = _load_model_from_bytes(model_bytes)
-            pipeline = joblib.load(io.BytesIO(pipeline_bytes))
-            model_artifacts = ModelArtifacts(model=model, pipeline=pipeline)
+        model_artifacts = _load_artifacts_from_tar_bytes(model_bytes)
 
         process_time = time.perf_counter() - start_time
         logger.info(

@@ -41,7 +41,6 @@ load_dotenv()
 SM_MODEL_DIR = os.environ.get("SM_MODEL_DIR", "/opt/ml/model")
 IN_SAGEMAKER_TRAINING = os.path.exists("/opt/ml/code")
 SAGEMAKER_BUCKET = os.getenv("SAGEMAKER_BUCKET")
-MODEL_S3_KEY = os.getenv("MODEL_S3_KEY", "models/model.pth")
 MODEL_TAR_S3_KEY = os.getenv("MODEL_TAR_S3_KEY", "models/model.tar.gz")
 SAGEMAKER_EXPERIMENT_NAME = os.getenv("SAGEMAKER_EXPERIMENT_NAME", "churn_prediction")
 
@@ -274,7 +273,6 @@ def save_model(model):
             tar.add(pipeline_path, arcname="pipeline.pkl")
 
     try:
-        upload_to_s3(model_path, MODEL_S3_KEY)
         upload_to_s3(model_tar_path, MODEL_TAR_S3_KEY)
     except Exception as e:
         logger.error("model_upload_failed", error=str(e))

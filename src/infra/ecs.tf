@@ -106,10 +106,6 @@ resource "aws_ecs_task_definition" "app" {
       },
       {
         name  = "MODEL_S3_URI"
-        value = "s3://${aws_s3_bucket.sagemaker.id}/models/model.pth"
-      },
-      {
-        name  = "MODEL_TAR_S3_URI"
         value = "s3://${aws_s3_bucket.sagemaker.id}/models/model.tar.gz"
       }
     ]

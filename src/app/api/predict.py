@@ -1,9 +1,10 @@
+import json
 import os
 from typing import Literal
 
 import structlog
-from fastapi import APIRouter, Body, Request
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError, field_validator
+from fastapi import APIRouter, Request, Response, status
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, field_validator
 
 from app.utils.machine_learning import predict_churn_class
 
@@ -12,6 +13,8 @@ logger = structlog.get_logger()
 
 
 class PredictRequestItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     gender: Literal["Female", "Male"]
     SeniorCitizen: int = Field(ge=0, le=1)
     Partner: Literal["Yes", "No"]
@@ -63,18 +66,46 @@ class PredictErrorResponse(BaseModel):
 predict_request_adapter = TypeAdapter(PredictRequestItem | list[PredictRequestItem])
 
 
+def _first_validation_error_message(exc: ValidationError) -> str:
+    error = exc.errors()[0]
+    loc = [str(part) for part in error.get("loc", []) if part != "__root__"]
+
+    if loc and loc[0] in ("PredictRequestItem", "list[PredictRequestItem]"):
+        loc.pop(0)
+
+    msg = error.get("msg", "Invalid request body")
+    if not loc:
+        return msg
+    return f"{'.'.join(loc)}: {msg}"
+
+
 @router.post("")
 async def predict(
     request: Request,
-    payload: dict | list[dict] | None = Body(default=None),
+    response: Response,
 ) -> PredictSingleResponse | PredictBatchResponse | PredictErrorResponse:
-    if payload is None:
+    raw_body = await request.body()
+    if not raw_body:
+        response.status_code = status.HTTP_400_BAD_REQUEST
         return PredictErrorResponse(error="Request body is required")
+
+    try:
+        payload = json.loads(raw_body)
+    except json.JSONDecodeError as exc:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return PredictErrorResponse(
+            error=f"Malformed JSON: {exc.msg} (line {exc.lineno}, column {exc.colno})"
+        )
+
+    if not isinstance(payload, (dict, list)):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return PredictErrorResponse(error="JSON body must be an object or a list of objects")
 
     try:
         validated_payload = predict_request_adapter.validate_python(payload)
     except ValidationError as exc:
-        return PredictErrorResponse(error=str(exc.errors()[0]["msg"]))
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return PredictErrorResponse(error=_first_validation_error_message(exc))
 
     threshold = float(os.getenv("PREDICTION_THRESHOLD", "0.5"))
     is_batch = isinstance(validated_payload, list)
@@ -86,6 +117,7 @@ async def predict(
 
     model = getattr(request.state, "model", None)
     if model is None:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return PredictErrorResponse(error="Model is not available")
 
     try:
@@ -96,6 +128,7 @@ async def predict(
         )
     except Exception as exc:
         logger.exception("prediction_failed", error=str(exc))
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return PredictErrorResponse(error="Prediction failed")
 
     if is_batch:
