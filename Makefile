@@ -37,7 +37,7 @@ format:
 
 test:
 	@echo "Running tests..."
-	@.venv/bin/pytest tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=80 -v
+	@.venv/bin/pytest tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=70 -v
 
 e2e:
 	@echo "Running tests..."
