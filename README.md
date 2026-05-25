@@ -1,182 +1,91 @@
-# Churn Prediction — FIAP Pós Tech ML · Grupo 102
+# Tech Challenge — FIAP Pós Tech ML · Grupo 102
 
-Rede neural (MLP com PyTorch) para prever cancelamento de clientes de uma operadora de telecom.
+Mono-repositório do grupo de estudo para os Tech Challenges da Pós-Graduação em **Machine Learning Engineering** da FIAP.
 
-**Dataset:** [Telco Customer Churn — IBM](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) · 7.043 clientes · 20 features
-
----
-
-## Pré-requisitos
-
-- Python 3.11 ou superior
-- Git
-
-> **Windows:** use WSL (Ubuntu) ou Git Bash. O comando `make` não funciona no CMD/PowerShell nativo.
+Cada fase vive em sua própria pasta sob [`phases/`](phases/) com `README`, dependências e Dockerfiles próprios — você pode rodar **qualquer fase isoladamente** sem interferir nas outras.
 
 ---
 
-## Setup inicial
+## Fases
+
+| Fase | Tema                                         | Status            | README                                                       | Milestone                                                                              |
+| ---- | -------------------------------------------- | ----------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| 1    | Churn Prediction (Telco)                     | ✅ Entregue       | [phases/phase-1/README.md](phases/phase-1/README.md)         | —                                                                                      |
+| 2    | Sistema de Recomendação E-commerce           | 🚧 Em andamento   | [phases/phase-2/README.md](phases/phase-2/README.md)         | [Fase 2 — Sistema de Recomendação](https://github.com/AllySantos/tech_challenge/milestones) |
+
+> Novas fases entram como `phases/phase-N/` seguindo o mesmo padrão.
+
+---
+
+## Começando
 
 ```bash
 git clone https://github.com/AllySantos/tech_challenge.git
 cd tech_challenge
+
+# Trabalhar numa fase específica:
+cd phases/phase-2
+# ... siga as instruções do README da fase
 ```
+
+**Pré-requisitos gerais:** Python 3.11+, Git, Docker (a partir da Fase 2).
+
+> **Windows:** use WSL (Ubuntu) ou Git Bash. Comandos `make` e shell scripts não funcionam no CMD/PowerShell nativo.
 
 ---
 
-## Comandos
+## Como o grupo trabalha
 
-```bash
-| Comando         | O que faz |
-|-----------------|-----------|
-| make install    | cria .venv e instala todas as dependências |
-| make train      | treina a MLP e salva o modelo |
-| make evaluate   | compara MLP vs baselines (LogReg, RF, GBM, DT) |
-| make lint       | verifica qualidade do código |
-| make format     | formata o código |
-| make test       | executa os testes |
-| make e2e        | executa testes de ponta a ponta |
-| make run          | inicia o servidor FastAPI |
-| make mlflow-ui    | abre a interface do MLflow |
-| make clean        | limpa arquivos gerados |
-```
+1. **Issues e milestones** — cada fase tem uma milestone no GitHub. Cada tarefa é uma issue com label `phase-N` e label da etapa (`etapa-1`...`etapa-4`).
+2. **Auto-atribuição** — issues nascem sem assignee. Pegue uma que esteja `pending`, atribua a si mesmo e mova para `in progress`.
+3. **Branch por issue** — `<tipo>/<nome-curto>` (ex.: `feat/dvc-pipeline`, `fix/early-stopping`). Cada branch parte do `main`.
+4. **Commits semânticos** — `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`. Mensagens em português ou inglês, mas consistentes na fase.
+5. **PR review obrigatório** — pelo menos 1 aprovação antes de mergear. CI verde é pré-requisito.
 
-## Jupyter
+Detalhes em [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**1. Instale as dependências:**
+---
 
-```bash
-python3 -m venv .venv
-
-# Mac / Linux
-source .venv/bin/activate
-
-# Windows (Git Bash)
-source .venv/Scripts/activate
-
-pip install -e .
-nbstripout --install
-```
-
-**2. Abra o Jupyter:**
-
-```bash
-jupyter notebook
-```
-
-**3. Execute os notebooks em ordem com Kernel → Restart & Run All:**
-
-| Notebook                          | Etapa   | O que faz                                |
-| --------------------------------- | ------- | ---------------------------------------- |
-| `notebooks/01_eda_baseline.ipynb` | Etapa 1 | Análise exploratória + baselines sklearn |
-| `notebooks/02_mlp_pytorch.ipynb`  | Etapa 2 | Treinamento da MLP + métricas + MLflow   |
-
-**4. Veja os experimentos no MLflow:**
-
-```bash
-.venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5001
-```
-
-Acesse: http://localhost:5001
-
-> **Mac:** a porta 5000 é reservada pelo sistema (AirPlay) — use 5001.
-
-## Estrutura do projeto
+## Estrutura do repositório
 
 ```
 tech_challenge/
-├── data/
-│   ├── raw/                        # Dataset original (não commitado — coloque aqui)
-│   └── processed/                  # Dados pré-processados
-├── notebooks/
-│   ├── 01_eda_baseline.ipynb       # EDA e baselines
-│   └── 02_mlp_pytorch.ipynb        # MLP PyTorch
-├── src/
-│   ├── app/                        # API em FastAPI
-│   ├── ml/                         # Recursos de ML (modelos, pipeline, treino)
-├── docs/                           # Model Card, arquitetura
-├── .gitattributes                  # Remove outputs de notebooks no commit (nbstripout)
-├── Makefile
-└── pyproject.toml
+├── README.md                       # este hub
+├── CONTRIBUTING.md                 # como contribuir (compartilhado)
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── LICENSE
+├── .github/
+│   ├── workflows/
+│   │   └── phase-1-ci.yml          # CI específica da Fase 1 (path-filter em phases/phase-1/**)
+│   ├── ISSUE_TEMPLATE/
+│   └── PULL_REQUEST_TEMPLATE.md
+└── phases/
+    ├── phase-1/                    # Churn Prediction — código completo, MLflow, AWS infra
+    │   ├── README.md
+    │   ├── Makefile
+    │   ├── pyproject.toml
+    │   ├── Dockerfile.app
+    │   ├── Dockerfile.training
+    │   ├── src/  tests/  notebooks/  data/  scripts/  models/  docs/
+    │
+    └── phase-2/                    # Recomendação E-commerce — em construção
+        ├── README.md
+        ├── docs/                   # challenge, objetivos, etapas, avaliação, arquitetura
+        ├── src/  tests/  notebooks/  configs/  data/  scripts/
+        └── .env.example
 ```
 
 ---
 
-## Arquitetura do modelo
+## Comunidade e padrões
 
-```
-Input (45 features)
-    ↓
-Linear(256) → BatchNorm → ReLU → Dropout(0.3)
-    ↓
-Linear(128) → BatchNorm → ReLU → Dropout(0.3)
-    ↓
-Linear(64)  → BatchNorm → ReLU → Dropout(0.3)
-    ↓
-Linear(1)   → logit  [BCEWithLogitsLoss aplica sigmoid internamente]
-```
-
-**Treino:** BCEWithLogitsLoss com peso de classe · Adam · EarlyStopping(patience=10) · Gradient clipping
+- [CONTRIBUTING.md](CONTRIBUTING.md) — convenções de branch, commit e PR.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — comportamento esperado entre membros do grupo.
+- [SECURITY.md](SECURITY.md) — como reportar problemas de segurança.
 
 ---
 
-## Decisões técnicas
+## Licença
 
-| Decisão          | Escolha                                | Por quê                                                      |
-| ---------------- | -------------------------------------- | ------------------------------------------------------------ |
-| Loss             | BCEWithLogitsLoss sem Sigmoid na saída | Mais estável numericamente; evita dupla aplicação de sigmoid |
-| Tracking         | MLflow + SQLite (`mlflow.db` na raiz)  | MLflow 3.x descontinuou file-based tracking                  |
-| Preprocessamento | sklearn Pipeline (fit só no treino)    | Evita data leakage; pipeline salvo para uso na API           |
-| Notebooks        | nbstripout via `.gitattributes`        | Remove outputs automaticamente no commit                     |
-
----
-
-## Time — Grupo 102
-
-| Nome            | RM     | GitHub                                             |
-| --------------- | ------ | -------------------------------------------------- |
-| Gabriel Furtado | 371440 | —                                                  |
-| Alícia Santos   | 374128 | [@AllySantos](https://github.com/AllySantos)       |
-| Rogerio Junior  | 370501 | [@nimesko](https://github.com/nimesko)             |
-| Diego Ribeiro   | 370996 | [@diegowribeiro](https://github.com/diegowribeiro) |
-
----
-
-## Docker
-
-Instruções para rodar o projeto via docker:
-
-1. docker build -f Dockerfile.app . -t churn-prediction .
-2. docker run -p 8000:8000 churn-prediction:latest
-
-## AWS Setup
-
-Instruções para criar a infraestrutura na AWS usando Terraform e configurar as permissões necessárias para o deploy:
-
-1. Crie uma conta AWS
-2. Crie o arquivo .env na raiz do projeto com as seguintes variáveis:
-
-```
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-```
-
-3. Rode make `plan-aws` para ver os artefatos para criar
-4. Rode make `build-aws` para criar a infraestrutura na AWS
-
-## URL do projeto
-
-O projeto está disponível em http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com
-Temos o endpoint the health check em http://churn-prediction-alb-654855468.us-east-1.elb.amazonaws.com/health
-
-## Critérios de avaliação
-
-| Critério                        | Peso |
-| ------------------------------- | ---- |
-| Qualidade do código e estrutura | 20%  |
-| Rede neural PyTorch             | 25%  |
-| Pipeline e reprodutibilidade    | 15%  |
-| API de inferência               | 15%  |
-| Documentação e Model Card       | 10%  |
-| Vídeo STAR                      | 10%  |
-| Bônus: deploy em nuvem          | 5%   |
+Distribuído sob a licença em [LICENSE](LICENSE).

@@ -1,4 +1,4 @@
-name: Core Pipeline
+name: Phase 1 — Core Pipeline
 
 env:
   AWS_REGION: us-east-1
@@ -15,8 +15,18 @@ env:
 on:
   push:
     branches: ["main"]
+    paths:
+      - "phases/phase-1/**"
+      - ".github/workflows/phase-1-ci.yml"
   pull_request:
     branches: ["**"]
+    paths:
+      - "phases/phase-1/**"
+      - ".github/workflows/phase-1-ci.yml"
+
+defaults:
+  run:
+    working-directory: phases/phase-1
 
 jobs:
   lint:
@@ -123,8 +133,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.app
+          context: ./phases/phase-1
+          file: ./phases/phase-1/Dockerfile.app
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:app-latest
@@ -140,7 +150,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: phases/phase-1/task-definition.json
           container-name: churn-prediction
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:app-latest
 
@@ -181,8 +191,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.training
+          context: ./phases/phase-1
+          file: ./phases/phase-1/Dockerfile.training
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training-latest
