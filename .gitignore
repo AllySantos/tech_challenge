@@ -4,6 +4,7 @@ data/raw/*.parquet
 data/processed/*.csv
 data/processed/*.parquet
 
+
 # Modelos treinados (usar MLflow em vez disso)
 models/*.pth
 models/*.pkl
