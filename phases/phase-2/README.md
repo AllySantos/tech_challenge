@@ -48,25 +48,75 @@ phases/phase-2/
 
 ---
 
-## Como rodar (vai ser preenchido conforme as Etapas forem entregues)
+## Como executar localmente
+
+Este projeto foi pensado para ser reprodutível do zero, com gerenciamento moderno de dependências via Poetry, configuração externa em .env e validação explícita do ambiente.
+
+### 1. Pré-requisitos
+
+- Python 3.11
+- Poetry
+
+### 2. Criar o ambiente e instalar dependências
 
 ```bash
 cd phases/phase-2
-
-# Etapa 2 — instalação
+poetry env use 3.11
 poetry install
-cp .env.example .env
-
-# Etapa 3 — pipeline reprodutível
-dvc pull
-dvc repro
-
-# Etapa 3 — Docker
-docker compose up --build
-
-# Etapa 4 — promoção do modelo
-mlflow models serve -m "models:/recsys/Production"
 ```
+
+No Windows PowerShell, o fluxo é o mesmo:
+
+```powershell
+cd phases/phase-2
+poetry env use 3.11
+poetry install
+```
+
+### 3. Configurar variáveis de ambiente
+
+```bash
+cp .env.example .env
+```
+
+No Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edite o arquivo .env com os valores apropriados para o seu ambiente.
+
+### 4. Validar se o ambiente está pronto
+
+```bash
+poetry run python scripts/validate_env.py
+```
+
+Esse script verifica a versão do Python, as dependências principais, a leitura das configurações e a existência dos diretórios esperados.
+
+### 5. Rodar testes
+
+```bash
+poetry run pytest tests/unit -q
+poetry run pytest tests/e2e -q
+```
+
+### 6. Reprodutibilidade garantida
+
+- Sempre que alterar dependências, gere e commite o lock file:
+
+```bash
+poetry lock
+```
+
+- Mantenha o projeto instalável do zero com:
+
+```bash
+poetry install
+```
+
+- Para checar uma instalação limpa em ambiente novo, basta repetir os passos acima a partir de um ambiente vazio.
 
 ---
 
