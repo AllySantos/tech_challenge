@@ -32,16 +32,16 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e .
-          pip install ruff
+          pip install poetry
+          poetry install --no-interaction --no-ansi
 
       - name: Lint with Ruff
         run: |
-          ruff check src/ tests/
+          poetry run ruff check src/ tests/
 
       - name: Format with Ruff
         run: |
-          ruff format --check src/ tests/
+          poetry run ruff format --check src/ tests/
 
   unit-test:
     runs-on: ubuntu-latest
@@ -58,12 +58,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e .
-          pip install pytest pytest-cov
+          pip install poetry
+          poetry install --no-interaction --no-ansi
 
       - name: Run Unit Tests
         run: |
-          pytest tests/unit \
+          poetry run pytest tests/unit \
             --cov=src \
             --cov-report=term-missing \
             --cov-report=xml \
@@ -85,11 +85,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e .
-          pip install pytest httpx
+          pip install poetry
+          poetry install --no-interaction --no-ansi
 
       - name: Run Smoke / E2E Tests
         run: |
-          pytest tests/e2e -v
+          poetry run pytest tests/e2e -v
 
   
