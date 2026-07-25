@@ -89,7 +89,9 @@ def check_expected_directories() -> list[str]:
         Lista de mensagens de erro, uma por diretório ausente.
     """
     project_root = Path(__file__).resolve().parent.parent
-    expected_dirs = ("data/raw", "data/processed", "models", "configs")
+    expected_dirs = ("data", "models", "features", "data", "evaluation", "training")
+
+    project_root = project_root / "src"
 
     errors = []
     for relative_dir in expected_dirs:
