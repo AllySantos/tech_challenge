@@ -77,7 +77,7 @@ def check_settings_loadable() -> list[str]:
     try:
         pass
         # TODO: Implementar validação de configuração
-    except Exception as exc: 
+    except Exception as exc:
         return [f"Falha ao carregar configurações (.env / Settings): {exc}"]
     return []
 
