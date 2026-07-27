@@ -1,0 +1,54 @@
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess --params params.yaml
+    deps:
+      - data/raw/interactions.csv
+      - src/data/preprocess.py
+    params:
+      - preprocess
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+
+  feature_eng:
+    cmd: python -m src.features.build_features --params params.yaml
+    deps:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+      - src/features/build_features.py
+    params:
+      - feature_eng
+    outs:
+      - data/processed/features/train.npz
+      - data/processed/features/val.npz
+      - data/processed/features/test.npz
+      - data/processed/features/feature_meta.json
+
+  train:
+    cmd: python -m src.training.train --params params.yaml
+    deps:
+      - data/processed/features/train.npz
+      - data/processed/features/val.npz
+      - data/processed/features/feature_meta.json
+      - src/training/train.py
+      - src/models/model_factory.py
+    params:
+      - train
+    outs:
+      - models/model.pt
+      - models/model_meta.json
+
+  evaluate:
+    cmd: python -m src.evaluation.evaluate --params params.yaml
+    deps:
+      - models/model.pt
+      - models/model_meta.json
+      - data/processed/features/test.npz
+      - src/evaluation/evaluate.py
+    params:
+      - evaluate
+    metrics:
+      - metrics.json:
+          cache: false

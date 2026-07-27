@@ -1,0 +1,15 @@
+.git
+.venv
+.pytest_cache
+.ruff_cache
+coverage.xml
+mlruns/
+notebooks/
+models/
+docs/
+notebooks/
+tests/
+data/
+.env
+.github
+__pycache__

@@ -1,0 +1,33 @@
+preprocess:
+  raw_path: data/raw/events.csv
+  output_dir: data/processed
+  event_types: [view, addtocart, transaction]
+  max_interactions: null # ex.: 300000 para acelerar execuções locais/dev
+  min_interactions: 5
+  val_size: 0.1
+  test_size: 0.1
+  seed: 42
+
+feature_eng:
+  input_dir: data/processed
+  output_dir: data/processed/features
+
+train:
+  input_dir: data/processed/features
+  model_dir: models
+  embedding_dim: 64
+  hidden_dims: [128, 64]
+  dropout: 0.2
+  negative_ratio: 4
+  batch_size: 256
+  learning_rate: 0.001
+  num_epochs: 20
+  early_stopping_patience: 3
+  seed: 42
+
+evaluate:
+  model_dir: models
+  input_dir: data/processed/features
+  k: 10
+  num_negative_candidates: 99
+  metrics_path: metrics.json
