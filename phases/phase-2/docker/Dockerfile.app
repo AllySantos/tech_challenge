@@ -30,6 +30,8 @@ FROM python:3.11-slim AS runtime
 
 RUN groupadd --system app && useradd --system --gid app --create-home app
 
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+
 ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

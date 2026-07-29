@@ -1,6 +1,6 @@
 stages:
   preprocess:
-    cmd: poetry run python -m src.data.preprocess
+    cmd: python -m src.data.preprocess
     deps:
       - src/data/preprocess.py
       - data/raw/events.csv
@@ -8,7 +8,7 @@ stages:
       - data/processed/events_processed.csv
 
   feature_eng:
-    cmd: poetry run python -m src.features.feature_engineer
+    cmd: python -m src.features.feature_engineer
     deps:
       - src/features/feature_engineer.py
       - data/processed/events_processed.csv
@@ -17,7 +17,7 @@ stages:
       - data/processed/interaction_matrix.npz
 
   train:
-    cmd: poetry run python -m src.models.train
+    cmd: python -m src.models.train
     deps:
       - src/models/train.py
       - data/processed/interaction_matrix.npz
@@ -29,7 +29,7 @@ stages:
           cache: false
 
   evaluate:
-    cmd: poetry run python -m src.evaluation.evaluator
+    cmd: python -m src.evaluation.evaluator
     deps:
       - src/evaluation/evaluator.py
       - models/recommender.pt
