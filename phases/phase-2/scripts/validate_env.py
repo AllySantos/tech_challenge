@@ -23,7 +23,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -153,14 +152,12 @@ def check_mlflow_reachable() -> tuple[bool, str]:
 
     try:
         request = Request(tracking_uri, method="GET")
-        with urlopen(request, timeout=3) as response: 
+        with urlopen(request, timeout=3) as response:
             if response.status < 400:
                 return True, f"MLflow alcançável em {tracking_uri}"
 
-    except Exception as exc:  
+    except Exception as exc:
         return False, f"Falha ao consultar MLflow em {tracking_uri}: {exc}"
-
-
 
 
 def check_dvc_remote_config() -> list[str]:
@@ -183,7 +180,7 @@ def main() -> int:
         ("Poetry", check_poetry),
         ("Dependências", check_required_packages),
         ("Configurações (.env / Settings)", check_environment_variables),
-        ("MLflow", check_mlflow_reachable)
+        ("MLflow", check_mlflow_reachable),
     )
 
     all_errors: list[str] = []

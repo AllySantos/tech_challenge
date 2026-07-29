@@ -118,8 +118,7 @@ def run_epoch(
 
 
 class EarlyStopper:
-    """Rastreia o melhor `state_dict` visto e decide quando parar o treino.
-    """
+    """Rastreia o melhor `state_dict` visto e decide quando parar o treino."""
 
     def __init__(self, patience: int) -> None:
         self.patience = patience
@@ -165,7 +164,11 @@ def build_train_loader(
 ) -> DataLoader:
     """Monta o DataLoader de treino da época (negative sampling varia por época)."""
     dataset = build_training_batch(
-        train_users, train_items, meta["num_items"], params["negative_ratio"], params["seed"] + epoch
+        train_users,
+        train_items,
+        meta["num_items"],
+        params["negative_ratio"],
+        params["seed"] + epoch,
     )
     return DataLoader(dataset, batch_size=params["batch_size"], shuffle=True)
 
@@ -208,8 +211,7 @@ def save_model_artifacts(
     meta: dict,
     params: dict,
 ) -> None:
-    """Salva o `state_dict` local (dep. do stage `evaluate`) e loga no MLflow.
-    """
+    """Salva o `state_dict` local (dep. do stage `evaluate`) e loga no MLflow."""
     model_dir.mkdir(parents=True, exist_ok=True)
     torch.save(stopper.best_state, model_dir / "model.pt")
     model.load_state_dict(stopper.best_state)
@@ -247,9 +249,15 @@ def run_training(params: dict) -> None:
     val_loader = build_val_loader(val_users, val_items, meta, params)
 
     with mlflow.start_run() as run:
-        mlflow.log_params({**params, "num_users": meta["num_users"], "num_items": meta["num_items"]})
-        stopper = train_with_early_stopping(model, train_users, train_items, val_loader, meta, params)
-        save_model_artifacts(model, stopper, Path(params["model_dir"]), run.info.run_id, meta, params)
+        mlflow.log_params(
+            {**params, "num_users": meta["num_users"], "num_items": meta["num_items"]}
+        )
+        stopper = train_with_early_stopping(
+            model, train_users, train_items, val_loader, meta, params
+        )
+        save_model_artifacts(
+            model, stopper, Path(params["model_dir"]), run.info.run_id, meta, params
+        )
 
     print(f"train: melhor val_loss={stopper.best_loss:.4f} (mlflow_run_id={run.info.run_id})")
 

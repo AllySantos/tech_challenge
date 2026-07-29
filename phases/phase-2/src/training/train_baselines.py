@@ -1,6 +1,4 @@
-"""Treina e avalia os baselines para comparação com o MLP.
-    
-"""
+"""Treina e avalia os baselines para comparação com o MLP."""
 
 from __future__ import annotations
 
@@ -14,7 +12,7 @@ import numpy as np
 import yaml
 
 from src.evaluation.ranking import evaluate_scorer, load_test_positives
-from src.models.baselines import PopularityBaseline, SvdBaseline
+from src.models.baselines import PopularityBaseline
 
 
 def load_split_arrays(features_dir: Path, split_name: str) -> tuple[np.ndarray, np.ndarray]:
@@ -41,8 +39,9 @@ def main() -> None:
     mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT_NAME", "recsys-phase-2"))
 
     baselines = {
-        "popularity_baseline": PopularityBaseline().fit(train_users, train_items, meta["num_items"]),
-
+        "popularity_baseline": PopularityBaseline().fit(
+            train_users, train_items, meta["num_items"]
+        ),
     }
 
     all_metrics: dict[str, dict[str, float]] = {}

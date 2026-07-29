@@ -11,8 +11,7 @@ from torch import nn
 
 
 class EmbeddingMLPRecommender(nn.Module):
-    """MLP embedding-based para recomendação
-    """
+    """MLP embedding-based para recomendação"""
 
     def __init__(
         self,
@@ -68,7 +67,5 @@ def create_model(model_type: str, num_users: int, num_items: int, **kwargs: obje
         ValueError: Se `model_type` não estiver registrado.
     """
     if model_type not in _REGISTRY:
-        raise ValueError(
-            f"model_type '{model_type}' desconhecido. Opções: {list(_REGISTRY)}"
-        )
+        raise ValueError(f"model_type '{model_type}' desconhecido. Opções: {list(_REGISTRY)}")
     return _REGISTRY[model_type](num_users=num_users, num_items=num_items, **kwargs)

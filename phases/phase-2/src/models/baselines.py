@@ -11,13 +11,12 @@ import numpy as np
 
 
 class PopularityBaseline:
-    """Recomenda sempre os itens mais populares, ignorando o usuário.
-    """
+    """Recomenda sempre os itens mais populares, ignorando o usuário."""
 
     def __init__(self) -> None:
         self._item_counts: np.ndarray | None = None
 
-    def fit(self, item_idx: np.ndarray, num_items: int) -> "PopularityBaseline":
+    def fit(self, item_idx: np.ndarray, num_items: int) -> PopularityBaseline:
         """Conta as interações de treino por item.
 
         Args:
@@ -33,4 +32,3 @@ class PopularityBaseline:
     def score(self, user_idx: int, item_idx: np.ndarray) -> np.ndarray:
         """Retorna a popularidade (contagem no treino) de cada candidato."""
         return self._item_counts[item_idx]
-

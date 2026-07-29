@@ -2,7 +2,7 @@ preprocess:
   raw_path: data/raw/events.csv
   output_dir: data/processed
   event_types: [view, addtocart, transaction]
-  max_interactions: 10000 
+  max_interactions: 10000
   min_interactions: 5
   val_size: 0.1
   test_size: 0.1

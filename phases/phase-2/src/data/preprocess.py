@@ -33,9 +33,7 @@ def load_raw_interactions(raw_path: Path) -> pd.DataFrame:
         FileNotFoundError: Se o arquivo não existir.
     """
     if not raw_path.is_file():
-        raise FileNotFoundError(
-            f"Dataset bruto não encontrado em '{raw_path}'. "
-        )
+        raise FileNotFoundError(f"Dataset bruto não encontrado em '{raw_path}'. ")
     return pd.read_csv(raw_path)
 
 
@@ -148,9 +146,7 @@ def main() -> None:
     raw_df = filter_events(raw_df, params["event_types"])
     raw_df = subsample(raw_df, params.get("max_interactions"), params["seed"])
     clean_df = clean_interactions(raw_df, params["min_interactions"])
-    train_df, val_df, test_df = split_by_time(
-        clean_df, params["val_size"], params["test_size"]
-    )
+    train_df, val_df, test_df = split_by_time(clean_df, params["val_size"], params["test_size"])
 
     out_dir = Path(parent_folder.joinpath(params["output_dir"]))
     out_dir.mkdir(parents=True, exist_ok=True)

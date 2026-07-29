@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1 — builder: resolve as dependências com Poetry e gera um venv  isolado. 
+# Stage 1 — builder: resolve as dependências com Poetry e gera um venv  isolado.
 FROM python:3.11-slim AS builder
 
 ENV PIP_NO_CACHE_DIR=1 \

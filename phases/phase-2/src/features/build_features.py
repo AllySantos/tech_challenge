@@ -18,8 +18,7 @@ import yaml
 
 # Pode trocar a estratégia de encoding sem afetar demais etapas
 class IdEncodingStrategy(Protocol):
-    """Codificar IDs
-    """
+    """Codificar IDs"""
 
     def fit(self, values: pd.Series) -> None: ...
 
@@ -73,7 +72,6 @@ def main() -> None:
     args = parser.parse_args()
 
     parent_folder = Path.cwd().parent.parent
-
 
     params = yaml.safe_load(args.params.read_text())["feature_eng"]
     input_dir = parent_folder.joinpath(params["input_dir"])
