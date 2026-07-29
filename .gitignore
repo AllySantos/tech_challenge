@@ -4,6 +4,9 @@ data/raw/*.parquet
 data/processed/*.csv
 data/processed/*.parquet
 
+# Arquivos Data dentro da fase
+phases/phase-2/data
+
 
 # Modelos treinados (usar MLflow em vez disso)
 models/*.pth
