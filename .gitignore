@@ -8,8 +8,8 @@ data/processed/*.parquet
 phases/phase-2/data
 
 # Arquivos de métrica e modelos
- phases/phase-2/metrics
- phases/phase-2/models
+phases/phase-2/metrics
+phases/phase-2/models
 
 # Modelos treinados (usar MLflow em vez disso)
 models/*.pth

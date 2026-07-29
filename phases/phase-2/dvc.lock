@@ -1,0 +1,58 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: poetry run python -m src.data.preprocess
+    deps:
+    - path: data/raw/events.csv
+      hash: md5
+      md5: fddaf7c1c6a9df23a726500a08ffdd7e
+      size: 94237913
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: 0bb3a5007f3cd49d2bcb2fb34ae0ac47
+      size: 2162
+    outs:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: 0cf7ecb355592874f014a7ea3f14d871
+      size: 38942838
+  feature_eng:
+    cmd: poetry run python -m src.features.feature_engineer
+    deps:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: 0cf7ecb355592874f014a7ea3f14d871
+      size: 38942838
+    - path: src/features/feature_engineer.py
+      hash: md5
+      md5: d71e78d63e0aee784559d6ce6628d396
+      size: 2273
+    outs:
+    - path: data/processed/interaction_matrix.npz
+      hash: md5
+      md5: be99a431919ef7dcfb1ef7a35048a619
+      size: 1383226
+    - path: data/processed/user_features.csv
+      hash: md5
+      md5: 1cc898563ffa25cab9b7b6fb24eed76f
+      size: 1218697
+  evaluate:
+    cmd: poetry run python -m src.evaluation.evaluator
+    deps:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: 0cf7ecb355592874f014a7ea3f14d871
+      size: 38942838
+    - path: models/recommender.pt
+      hash: md5
+      md5: 0012027343910d5646424ca8aa5c892b
+      size: 15271920
+    - path: src/evaluation/evaluator.py
+      hash: md5
+      md5: 68e093a83061cc3719ba62430509cedd
+      size: 3665
+    outs:
+    - path: metrics/eval_metrics.json
+      hash: md5
+      md5: ee80ec3d01af7b158dcd09b8edcf02db
+      size: 159

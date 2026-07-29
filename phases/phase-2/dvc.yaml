@@ -16,17 +16,17 @@ stages:
       - data/processed/user_features.csv
       - data/processed/interaction_matrix.npz
 
-  # train:
-  #   cmd: poetry run python -m src.models.train
-  #   deps:
-  #     - src/recsys/models/train.py
-  #     - data/processed/interaction_matrix.npz
-  #     - data/processed/user_features.csv
-  #   outs:
-  #     - models/recommender.pt
-  #   metrics:
-  #     - metrics/train_metrics.json:
-  #         cache: false
+  train:
+    cmd: poetry run python -m src.models.train
+    deps:
+      - src/recsys/models/train.py
+      - data/processed/interaction_matrix.npz
+      - data/processed/user_features.csv
+    outs:
+      - models/recommender.pt
+    metrics:
+      - metrics/train_metrics.json:
+          cache: false
 
   evaluate:
     cmd: poetry run python -m src.evaluation.evaluator
