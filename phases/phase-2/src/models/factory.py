@@ -1,6 +1,6 @@
 from typing import Any
 
-from recsys.models.base import BaseRecommender
+from src.models.base import BaseRecommender
 
 
 class ModelFactory:
