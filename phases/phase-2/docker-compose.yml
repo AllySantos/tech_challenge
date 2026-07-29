@@ -1,29 +1,40 @@
 services:
   mlflow:
-    image: python:3.11-slim
-    user: root
-    command:
-      - bash
-      - -lc
-      - mkdir -p /mlflow/artifacts && chmod -R 777 /mlflow && python3 -m pip install mlflow==2.10.0 && python3 -m mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/artifacts
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: recsys-phase2:latest
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri sqlite:////mlflow/mlflow.db
+        --default-artifact-root /mlflow/artifacts
     ports:
       - "5000:5000"
     volumes:
-      - mlflow_data:/mlflow
-
-  training:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  train:
     build:
       context: .
-      target: runtime
+      dockerfile: docker/Dockerfile
+    image: recsys-phase2:latest
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - MLFLOW_EXPERIMENT_NAME=recsys-retailrocket
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     volumes:
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./metrics:/app/metrics
+
+      - .:/app
+    command: ["dvc", "repro"]
 
 volumes:
-  mlflow_data:
+  mlflow-data:

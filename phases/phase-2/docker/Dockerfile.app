@@ -1,35 +1,49 @@
-# ================================
-# Stage 1: builder
-# ================================
+# syntax=docker/dockerfile:1
+
+# ---------------------------------------------------------------------------
+# Stage 1 — builder
+# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
-WORKDIR /app
+ENV PIP_NO_CACHE_DIR=1 \
+    POETRY_VERSION=2.1.1 \
+    POETRY_VIRTUALENVS_CREATE=false
 
-RUN pip install poetry==2.4.1
+WORKDIR /build
+
+RUN pip install "poetry==${POETRY_VERSION}"
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.in-project true && \
-    poetry install --only main --no-root
+RUN python -m venv /opt/venv
 
-# ================================
-# Stage 2: runtime
-# ================================
+# AQUI ESTÁ A CORREÇÃO: Adicione o VIRTUAL_ENV para forçar o Poetry a usar este venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    VIRTUAL_ENV="/opt/venv"
+
+RUN poetry install --only main --no-root
+
+# ---------------------------------------------------------------------------
+# Stage 2 — runtime
+# ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
+
+RUN groupadd --system app && useradd --system --gid app --create-home app
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-COPY --from=builder /app/.venv ./.venv
-
+COPY --from=builder /opt/venv /opt/venv
 COPY src/ ./src/
-COPY configs/ ./configs/
-COPY dvc.yaml ./
-COPY .env.example ./.env.example
-COPY start.sh ./
-COPY models/ ./models/
-RUN chmod +x start.sh
+COPY scripts/ ./scripts/
+COPY dvc.yaml pyproject.toml ./
 
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app/src"
+RUN mkdir -p data models /mlflow && \
+    chown -R app:app /app /opt/venv /mlflow
 
-CMD ["sh", "start.sh"]
+USER app
+
+ENTRYPOINT []
