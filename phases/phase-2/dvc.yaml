@@ -19,7 +19,7 @@ stages:
   train:
     cmd: poetry run python -m src.models.train
     deps:
-      - src/recsys/models/train.py
+      - src/models/train.py
       - data/processed/interaction_matrix.npz
       - data/processed/user_features.csv
     outs:

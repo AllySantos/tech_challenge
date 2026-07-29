@@ -45,8 +45,8 @@ stages:
       size: 38942838
     - path: models/recommender.pt
       hash: md5
-      md5: 0012027343910d5646424ca8aa5c892b
-      size: 15271920
+      md5: 20c07f38e49b957962d65616cf2a4347
+      size: 15272261
     - path: src/evaluation/evaluator.py
       hash: md5
       md5: 68e093a83061cc3719ba62430509cedd
@@ -54,5 +54,29 @@ stages:
     outs:
     - path: metrics/eval_metrics.json
       hash: md5
-      md5: ee80ec3d01af7b158dcd09b8edcf02db
-      size: 159
+      md5: 2fadf66320a8d3937c96778b4fe6d71f
+      size: 157
+  train:
+    cmd: poetry run python -m src.models.train
+    deps:
+    - path: data/processed/interaction_matrix.npz
+      hash: md5
+      md5: be99a431919ef7dcfb1ef7a35048a619
+      size: 1383226
+    - path: data/processed/user_features.csv
+      hash: md5
+      md5: 1cc898563ffa25cab9b7b6fb24eed76f
+      size: 1218697
+    - path: src/models/train.py
+      hash: md5
+      md5: fd5cc79b0e779ed8532997ff9d967a23
+      size: 6185
+    outs:
+    - path: metrics/train_metrics.json
+      hash: md5
+      md5: 2821c0c056eaf2d9beca1fc5250638c0
+      size: 54
+    - path: models/recommender.pt
+      hash: md5
+      md5: 20c07f38e49b957962d65616cf2a4347
+      size: 15272261
