@@ -22,7 +22,7 @@ services:
   train:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.app
     image: recsys-phase2:latest
     depends_on:
       mlflow:
@@ -31,6 +31,7 @@ services:
       - .env
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: recsys-retailrocket-run-dvc
     volumes:
 
       - .:/app
