@@ -1,44 +1,35 @@
-# syntax=docker/dockerfile:1
-
-# Stage 1 — builder: resolve as dependências com Poetry e gera um venv  isolado.
+# ================================
+# Stage 1: builder
+# ================================
 FROM python:3.11-slim AS builder
-
-ENV PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=2.1.1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=true
-
-WORKDIR /build
-
-RUN pip install "poetry==${POETRY_VERSION}"
-
-COPY pyproject.toml poetry.lock ./
-RUN poetry install --only main --no-root \
-    && mv /build/.venv /opt/venv
-
-# Stage 2 — runtime: imagem final enxuta, sem Poetry/compiladores, rodando  como usuário não-root.
-
-FROM python:3.11-slim AS runtime
-
-RUN groupadd --system app && useradd --system --gid app --create-home app
-
-ENV PATH="/opt/venv/bin:${PATH}" \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
-COPY --from=builder /opt/venv /opt/venv
+RUN pip install poetry==2.4.1
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --only main --no-root
+
+# ================================
+# Stage 2: runtime
+# ================================
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /app/.venv ./.venv
+
 COPY src/ ./src/
-COPY scripts/ ./scripts/
-COPY dvc.yaml params.yaml pyproject.toml ./
+COPY configs/ ./configs/
+COPY dvc.yaml ./
+COPY .env.example ./.env.example
+COPY start.sh ./
+COPY models/ ./models/
+RUN chmod +x start.sh
 
-# data/, models/ e mlruns/ são montados via volume no docker-compose —
-# não fazem parte da imagem (mantém a imagem pequena e independente do
-# dataset escolhido).
-RUN mkdir -p data models && chown -R app:app /app
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src"
 
-USER app
-
-# Sem CMD fixo: o docker-compose.yml define o comando de cada serviço
-# (treino roda `dvc repro`, MLflow roda `mlflow server`).
-ENTRYPOINT []
+CMD ["sh", "start.sh"]
