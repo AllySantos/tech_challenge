@@ -1,0 +1,49 @@
+services:
+  # Servidor MLflow: guarda o histórico de runs (backend) e os artefatos
+  # (modelos, metrics.json etc.) em volumes nomeados, para persistir entre
+  # execuções de `docker compose up`.
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: recsys-phase2:latest
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri sqlite:////mlflow/mlflow.db
+        --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Serviço de treino: roda o pipeline DVC ponta-a-ponta dentro do container,
+  # usando a mesma imagem do MLflow (evita manter dois Dockerfiles).
+  # `dvc repro` só re-executa os stages cujos deps/params/código mudaram.
+  train:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: recsys-phase2:latest
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      # Código montado como bind mount só para permitir `dvc repro` gravar
+      # data/, models/ e metrics.json de volta no host (facilita inspecionar
+      # e commitar/`dvc add` os resultados sem copiar para fora do container).
+      - .:/app
+    command: ["dvc", "repro"]
+
+volumes:
+  mlflow-data:
