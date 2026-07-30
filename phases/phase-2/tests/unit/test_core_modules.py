@@ -3,7 +3,7 @@ import pandas as pd
 from scipy import sparse
 
 from src.data.preprocess import encode_ids, filter_events, preprocess
-from src.evaluation.evaluator import hit_rate_at_k, ndcg_at_k, precision_at_k, recall_at_k
+from src.evaluation.evaluator import ndcg_at_k, precision_at_k, recall_at_k
 from src.features.feature_engineer import create_interaction_matrix, create_user_features
 from src.models.base import BaseRecommender
 from src.models.factory import ModelFactory
@@ -95,7 +95,13 @@ def test_create_user_features_aggregates_event_counts():
 
     features = create_user_features(df)
 
-    assert list(features.columns) == ["user_idx", "total_events", "unique_items", "transactions", "add_to_cart"]
+    assert list(features.columns) == [
+        "user_idx",
+        "total_events",
+        "unique_items",
+        "transactions",
+        "add_to_cart",
+    ]
     assert features.loc[features["user_idx"] == 0, "total_events"].iloc[0] == 2
     assert features.loc[features["user_idx"] == 0, "transactions"].iloc[0] == 1
     assert features.loc[features["user_idx"] == 1, "add_to_cart"].iloc[0] == 1

@@ -1,14 +1,14 @@
 # Model Card — recsys-mlp
 
 ## Descrição do Modelo
-Rede neural MLP (Multilayer Perceptron) com embeddings para recomendação 
+Rede neural MLP (Multilayer Perceptron) com embeddings para recomendação
 de produtos em e-commerce, treinada sobre o dataset RetailRocket.
 
 ## Uso Pretendido
-- **Caso de uso primário:** Recomendar produtos para usuários baseado em 
+- **Caso de uso primário:** Recomendar produtos para usuários baseado em
   histórico de navegação
 - **Usuários pretendidos:** Times de produto e engenharia de e-commerce
-- **Casos de uso fora do escopo:** Recomendação para usuários novos 
+- **Casos de uso fora do escopo:** Recomendação para usuários novos
   (cold start)
 
 ## Dataset
@@ -45,9 +45,9 @@ de produtos em e-commerce, treinada sobre o dataset RetailRocket.
 
 ## Limitações e Vieses
 - **Cold start:** Não recomenda para usuários ou itens sem histórico
-- **Avaliação:** Métricas calculadas nos dados de treino — sem split 
+- **Avaliação:** Métricas calculadas nos dados de treino — sem split
   treino/teste adequado
-- **Baseline:** O modelo de popularidade superou o MLP nas métricas 
+- **Baseline:** O modelo de popularidade superou o MLP nas métricas
   atuais — indica necessidade de mais epochs e tuning
 - **Dados:** IDs de usuários e itens são anonimizados (hashed)
 

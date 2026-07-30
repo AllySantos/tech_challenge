@@ -1,10 +1,3 @@
-import warnings
-
-warnings.filterwarnings(
-    "ignore",
-    category=DeprecationWarning,
-)
-
 import pytest
 from fastapi.testclient import TestClient
 
