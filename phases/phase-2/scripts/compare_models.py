@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+
 from src.configs.settings import settings
 from src.evaluation.evaluator import (
     hit_rate_at_k,
@@ -13,7 +14,6 @@ from src.evaluation.evaluator import (
     precision_at_k,
     recall_at_k,
 )
-import src.models.baseline
 from src.models.factory import ModelFactory
 
 logging.basicConfig(level=logging.INFO)

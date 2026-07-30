@@ -1,10 +1,10 @@
 """Register the best model in MLflow Model Registry."""
 
 import logging
-import os
 
 import mlflow
 from mlflow import MlflowClient
+
 from src.configs.settings import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -91,13 +91,10 @@ def main() -> None:
     version = register_model(run, model_name="recsys-mlp")
     promote_to_staging(model_name="recsys-mlp", version=version)
 
-
     if settings.promote_to_production.lower() == "true":
         promote_to_production(model_name="recsys-mlp", version=version)
     else:
-        logger.info(
-            "Skipping production promotion (set PROMOTE_TO_PRODUCTION=true to promote)"
-        )
+        logger.info("Skipping production promotion (set PROMOTE_TO_PRODUCTION=true to promote)")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,6 @@ import scipy.sparse as sp
 
 from src.configs.settings import settings
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -59,9 +59,7 @@ def preprocess(input_path: str, output_path: str) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-
     print(settings.data_raw_path)
-
 
     preprocess(
         input_path=f"{settings.data_raw_path}/events.csv",

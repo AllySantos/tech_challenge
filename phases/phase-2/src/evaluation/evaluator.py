@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import torch
 
-from src.models.train import MLPRecommender
 from src.configs.settings import settings
+from src.models.train import MLPRecommender
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,7 @@ def recall_at_k(relevant: set, recommended: list, k: int) -> float:
 def ndcg_at_k(relevant: set, recommended: list, k: int) -> float:
     """Calculate NDCG@K."""
     recommended_k = recommended[:k]
-    dcg = sum(
-        1.0 / np.log2(i + 2) for i, item in enumerate(recommended_k) if item in relevant
-    )
+    dcg = sum(1.0 / np.log2(i + 2) for i, item in enumerate(recommended_k) if item in relevant)
     idcg = sum(1.0 / np.log2(i + 2) for i in range(min(len(relevant), k)))
     return dcg / idcg if idcg > 0 else 0.0
 
@@ -58,15 +56,11 @@ def evaluate(
     n_items_total = df["item_idx"].max() + 1
 
     model = MLPRecommender(n_users_total, n_items_total)
-    model.load_state_dict(
-        torch.load(model_path, map_location=device, weights_only=True)
-    )
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.to(device)
     model.eval()
 
-    sample_users = np.random.choice(
-        df["user_idx"].unique(), size=n_users, replace=False
-    )
+    sample_users = np.random.choice(df["user_idx"].unique(), size=n_users, replace=False)
 
     precision_scores, recall_scores, ndcg_scores, hr_scores = [], [], [], []
 
@@ -77,9 +71,7 @@ def evaluate(
                 continue
 
             all_items = torch.arange(n_items_total, dtype=torch.long).to(device)
-            user_tensor = torch.tensor([user_id] * n_items_total, dtype=torch.long).to(
-                device
-            )
+            user_tensor = torch.tensor([user_id] * n_items_total, dtype=torch.long).to(device)
             scores = model(user_tensor, all_items).cpu().numpy()
             recommended = np.argsort(scores)[::-1].tolist()
 
@@ -103,8 +95,6 @@ def evaluate(
 
 
 if __name__ == "__main__":
-
-
     logging.basicConfig(level=logging.INFO)
     evaluate(
         model_path="models/recommender.pt",

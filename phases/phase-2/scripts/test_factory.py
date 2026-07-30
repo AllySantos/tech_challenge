@@ -1,4 +1,5 @@
 import numpy as np
+
 from src.models.factory import ModelFactory
 
 print("Modelos registrados:", ModelFactory.list_models())

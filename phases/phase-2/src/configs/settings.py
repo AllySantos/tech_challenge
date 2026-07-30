@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pathlib import Path
+
 
 class Settings(BaseSettings):
     """Central project configuration loaded from environment variables."""
@@ -16,7 +16,6 @@ class Settings(BaseSettings):
 
     # Paths
 
-    
     data_raw_path: str = "data/raw"
     data_processed_path: str = "data/processed"
     models_path: str = "models"
@@ -27,6 +26,7 @@ class Settings(BaseSettings):
     learning_rate: float = 0.001
     num_epochs: int = 50
 
-    promote_to_production : str = "true"
+    promote_to_production: str = "false"
+
 
 settings = Settings()
