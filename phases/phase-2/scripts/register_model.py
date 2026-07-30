@@ -1,6 +1,7 @@
 """Register the best model in MLflow Model Registry."""
 
 import logging
+import os
 
 import mlflow
 from mlflow import MlflowClient
@@ -10,8 +11,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_best_run(experiment_name: str) -> str:
-    """Return the run_id with lowest best_loss."""
+def get_best_run(experiment_name: str):
+    """Return the run with lowest best_loss."""
     client = MlflowClient()
     experiment = client.get_experiment_by_name(experiment_name)
 
@@ -31,31 +32,72 @@ def get_best_run(experiment_name: str) -> str:
         best_run.info.run_id,
         best_run.data.metrics["best_loss"],
     )
-    return best_run.info.run_id
+    return best_run
 
 
-def register_model(run_id: str, model_name: str) -> None:
-    """Register model and promote to Production."""
-    client = MlflowClient()
+def register_model(run, model_name: str) -> str:
+    """Register the model logged by train.py and return the new version.
 
-    model_uri = f"mlflow-artifacts:/1/{run_id}/artifacts/recommender.pt"
+    train.py logs the model via mlflow.pytorch.log_model() and stores the
+    resulting model_uri as a run tag, so this avoids hardcoding artifact
+    filenames or MLflow's internal 'runs:/' path conventions.
+    """
+    model_uri = run.data.tags.get("model_uri")
+    if not model_uri:
+        raise ValueError(
+            f"Run {run.info.run_id} has no 'model_uri' tag. "
+            "Was it trained with the updated train.py that logs the model "
+            "via mlflow.pytorch.log_model()?"
+        )
+
     mv = mlflow.register_model(model_uri, model_name)
     logger.info("Registered model '%s' version %s", model_name, mv.version)
+    return mv.version
 
+
+def promote_to_staging(model_name: str, version: str) -> None:
+    """Assign the 'staging' alias to a newly registered model version."""
+    client = MlflowClient()
+    client.set_registered_model_alias(
+        name=model_name,
+        alias="staging",
+        version=version,
+    )
+    logger.info("Model '%s' v%s promoted to 'staging'", model_name, version)
+
+
+def promote_to_production(model_name: str, version: str) -> None:
+    """Assign the 'production' alias to a model version already in staging."""
+    client = MlflowClient()
     client.set_registered_model_alias(
         name=model_name,
         alias="production",
-        version=mv.version,
+        version=version,
     )
-    logger.info("Model promoted to 'production' alias")
+    logger.info("Model '%s' v%s promoted to 'production'", model_name, version)
 
 
 def main() -> None:
-    """Run model registration pipeline."""
+    """Run model registration pipeline: register -> staging -> production.
+
+    Production promotion only happens automatically when explicitly
+    requested (PROMOTE_TO_PRODUCTION=true). This mirrors a real MLOps
+    gate: staging is where validation happens before a human/CI decides
+    to promote further.
+    """
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
 
-    run_id = get_best_run(settings.mlflow_experiment_name)
-    register_model(run_id, model_name="recsys-mlp")
+    run = get_best_run(settings.mlflow_experiment_name)
+    version = register_model(run, model_name="recsys-mlp")
+    promote_to_staging(model_name="recsys-mlp", version=version)
+
+
+    if settings.promote_to_production.lower() == "true":
+        promote_to_production(model_name="recsys-mlp", version=version)
+    else:
+        logger.info(
+            "Skipping production promotion (set PROMOTE_TO_PRODUCTION=true to promote)"
+        )
 
 
 if __name__ == "__main__":

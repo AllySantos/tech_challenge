@@ -165,6 +165,17 @@ def train(
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), output_path)
+
+        # Logs the model as a first-class MLflow "logged model" entity
+        # (not just a raw file artifact), so it can later be registered
+        # with mlflow.register_model(model_info.model_uri, ...).
+        # serialization_format="pickle" avoids MLflow's default 'pt2'
+        # (torch.export) format, which requires tracing the model with a
+        # concrete input_example — unnecessary overhead for this project.
+        model_info = mlflow.pytorch.log_model(
+            model, name="recommender", serialization_format="pickle"
+        )
+        mlflow.set_tag("model_uri", model_info.model_uri)
         mlflow.log_artifact(output_path)
 
         metrics = {"best_loss": best_loss, "epochs_trained": epoch + 1}

@@ -27,5 +27,6 @@ class Settings(BaseSettings):
     learning_rate: float = 0.001
     num_epochs: int = 50
 
+    promote_to_production : str = "true"
 
 settings = Settings()
