@@ -5,6 +5,10 @@ data/processed/*.csv
 data/processed/*.parquet
 
 
+# Arquivos de métrica e modelos
+phases/phase-2/metrics
+phases/phase-2/models
+
 # Modelos treinados (usar MLflow em vez disso)
 models/*.pth
 models/*.pkl

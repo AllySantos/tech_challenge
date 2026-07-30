@@ -1,54 +1,39 @@
 stages:
   preprocess:
-    cmd: python -m src.data.preprocess --params params.yaml
+    cmd: python -m src.data.preprocess
     deps:
-      - data/raw/interactions.csv
       - src/data/preprocess.py
-    params:
-      - preprocess
+      - data/raw/events.csv
     outs:
-      - data/processed/train.csv
-      - data/processed/val.csv
-      - data/processed/test.csv
+      - data/processed/events_processed.csv
 
   feature_eng:
-    cmd: python -m src.features.build_features --params params.yaml
+    cmd: python -m src.features.feature_engineer
     deps:
-      - data/processed/train.csv
-      - data/processed/val.csv
-      - data/processed/test.csv
-      - src/features/build_features.py
-    params:
-      - feature_eng
+      - src/features/feature_engineer.py
+      - data/processed/events_processed.csv
     outs:
-      - data/processed/features/train.npz
-      - data/processed/features/val.npz
-      - data/processed/features/test.npz
-      - data/processed/features/feature_meta.json
+      - data/processed/user_features.csv
+      - data/processed/interaction_matrix.npz
 
   train:
-    cmd: python -m src.training.train --params params.yaml
+    cmd: python -m src.models.train
     deps:
-      - data/processed/features/train.npz
-      - data/processed/features/val.npz
-      - data/processed/features/feature_meta.json
-      - src/training/train.py
-      - src/models/model_factory.py
-    params:
-      - train
+      - src/models/train.py
+      - data/processed/interaction_matrix.npz
+      - data/processed/user_features.csv
     outs:
-      - models/model.pt
-      - models/model_meta.json
+      - models/recommender.pt
+    metrics:
+      - metrics/train_metrics.json:
+          cache: false
 
   evaluate:
-    cmd: python -m src.evaluation.evaluate --params params.yaml
+    cmd: python -m src.evaluation.evaluator
     deps:
-      - models/model.pt
-      - models/model_meta.json
-      - data/processed/features/test.npz
-      - src/evaluation/evaluate.py
-    params:
-      - evaluate
+      - src/evaluation/evaluator.py
+      - models/recommender.pt
+      - data/processed/events_processed.csv
     metrics:
-      - metrics.json:
+      - metrics/eval_metrics.json:
           cache: false

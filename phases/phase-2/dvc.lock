@@ -1,0 +1,87 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+    - path: data/raw/events.csv
+      hash: md5
+      md5: fddaf7c1c6a9df23a726500a08ffdd7e
+      size: 94237913
+      isexec: true
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: 0bb3a5007f3cd49d2bcb2fb34ae0ac47
+      size: 2162
+      isexec: true
+    outs:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: c9a3e4a6240c7607329fc0dc64069bee
+      size: 38109374
+  feature_eng:
+    cmd: python -m src.features.feature_engineer
+    deps:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: c9a3e4a6240c7607329fc0dc64069bee
+      size: 38109374
+    - path: src/features/feature_engineer.py
+      hash: md5
+      md5: d71e78d63e0aee784559d6ce6628d396
+      size: 2273
+      isexec: true
+    outs:
+    - path: data/processed/interaction_matrix.npz
+      hash: md5
+      md5: ac8cff251b593daf8b5c850de3f7c7ae
+      size: 1383226
+    - path: data/processed/user_features.csv
+      hash: md5
+      md5: 64b64616f7dae1fb5015b40c19d8c57b
+      size: 1138584
+  evaluate:
+    cmd: python -m src.evaluation.evaluator
+    deps:
+    - path: data/processed/events_processed.csv
+      hash: md5
+      md5: c9a3e4a6240c7607329fc0dc64069bee
+      size: 38109374
+    - path: models/recommender.pt
+      hash: md5
+      md5: 3bb6542f6fb9f673bb81cf828dda6972
+      size: 15272261
+    - path: src/evaluation/evaluator.py
+      hash: md5
+      md5: 68e093a83061cc3719ba62430509cedd
+      size: 3665
+      isexec: true
+    outs:
+    - path: metrics/eval_metrics.json
+      hash: md5
+      md5: 101c96237ed374b18f8545fe81150c24
+      size: 156
+  train:
+    cmd: python -m src.models.train
+    deps:
+    - path: data/processed/interaction_matrix.npz
+      hash: md5
+      md5: ac8cff251b593daf8b5c850de3f7c7ae
+      size: 1383226
+    - path: data/processed/user_features.csv
+      hash: md5
+      md5: 64b64616f7dae1fb5015b40c19d8c57b
+      size: 1138584
+    - path: src/models/train.py
+      hash: md5
+      md5: 7171ac41b349d23d2a2ebfbb01221a4d
+      size: 6806
+      isexec: true
+    outs:
+    - path: metrics/train_metrics.json
+      hash: md5
+      md5: c1dd47717c50662d323e23ab9e7f30fc
+      size: 54
+    - path: models/recommender.pt
+      hash: md5
+      md5: 3bb6542f6fb9f673bb81cf828dda6972
+      size: 15272261
