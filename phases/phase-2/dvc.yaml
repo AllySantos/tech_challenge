@@ -1,0 +1,39 @@
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+      - src/data/preprocess.py
+      - data/raw/events.csv
+    outs:
+      - data/processed/events_processed.csv
+
+  feature_eng:
+    cmd: python -m src.features.feature_engineer
+    deps:
+      - src/features/feature_engineer.py
+      - data/processed/events_processed.csv
+    outs:
+      - data/processed/user_features.csv
+      - data/processed/interaction_matrix.npz
+
+  train:
+    cmd: python -m src.models.train
+    deps:
+      - src/models/train.py
+      - data/processed/interaction_matrix.npz
+      - data/processed/user_features.csv
+    outs:
+      - models/recommender.pt
+    metrics:
+      - metrics/train_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m src.evaluation.evaluator
+    deps:
+      - src/evaluation/evaluator.py
+      - models/recommender.pt
+      - data/processed/events_processed.csv
+    metrics:
+      - metrics/eval_metrics.json:
+          cache: false

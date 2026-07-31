@@ -1,0 +1,93 @@
+name: Phase 2 — Core Pipeline
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "phases/phase-2/**"
+      - ".github/workflows/phase-2-ci.yml"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "phases/phase-2/**"
+      - ".github/workflows/phase-2-ci.yml"
+
+defaults:
+  run:
+    working-directory: phases/phase-2
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction --no-ansi --with dev
+
+      - name: Lint with Ruff
+        run: |
+          poetry run ruff check src/ tests/
+
+      - name: Format with Ruff
+        run: |
+          poetry run ruff format --check src/ tests/
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction --no-ansi --with dev
+
+      - name: Run Unit Tests
+        run: |
+          poetry run pytest tests/unit \
+            --cov=src \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=70 \
+            -v
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry install --no-interaction --no-ansi --with dev
+
+      - name: Run Smoke / E2E Tests
+        run: |
+          poetry run pytest tests/e2e -v
