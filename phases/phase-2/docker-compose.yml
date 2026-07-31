@@ -38,5 +38,27 @@ services:
       - ../..:/app
     command: ["dvc", "repro"]
 
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: recsys-phase2:latest
+    env_file:
+      - .env
+    working_dir: /app/phases/phase-2
+    volumes:
+      # Same mount as `train` so the API can read the model that training
+      # wrote to models/recommender.pt. Run `docker compose run train`
+      # (or `dvc repro`) at least once before starting this service.
+      - ../..:/app
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "src.app.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   mlflow-data:

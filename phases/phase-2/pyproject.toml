@@ -18,12 +18,16 @@ pydantic = "^2.13"
 pydantic-settings = "^2.7"
 python-dotenv = "^1.2"
 pyyaml = "^6.0"
+fastapi = "^0.115"
+uvicorn = { extras = ["standard"], version = "^0.34" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0"
 pytest-cov = "^7.1"
 ruff = "^0.15"
 pre-commit = "^4.4"
+httpx = "^0.28"
+httpx2 = "^2.9"
 
 [build-system]
 requires = ["poetry-core>=2.0"]

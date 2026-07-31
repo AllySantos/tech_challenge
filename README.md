@@ -8,10 +8,10 @@ Cada fase vive em sua própria pasta sob [`phases/`](phases/) com `README`, depe
 
 ## Fases
 
-| Fase | Tema                                         | Status            | README                                                       | Milestone                                                                              |
-| ---- | -------------------------------------------- | ----------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| 1    | Churn Prediction (Telco)                     | ✅ Entregue       | [phases/phase-1/README.md](phases/phase-1/README.md)         | —                                                                                      |
-| 2    | Sistema de Recomendação E-commerce           | 🚧 Em andamento   | [phases/phase-2/README.md](phases/phase-2/README.md)         | [Fase 2 — Sistema de Recomendação](https://github.com/AllySantos/tech_challenge/milestones) |
+| Fase | Tema                                | Status                                      | README                                                | Milestone                                                                                    |
+| ---- | ------------------------------------ | -------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 1    | Churn Prediction (Telco)             | ✅ Entregue                                  | [phases/phase-1/README.md](phases/phase-1/README.md) | —                                                                                              |
+| 2    | Sistema de Recomendação E-commerce   | 🔧 Pipeline funcional · finalizando entrega | [phases/phase-2/README.md](phases/phase-2/README.md) | [Fase 2 — Sistema de Recomendação](https://github.com/AllySantos/tech_challenge/milestones)   |
 
 > Novas fases entram como `phases/phase-N/` seguindo o mesmo padrão.
 
@@ -69,10 +69,15 @@ tech_challenge/
     │   ├── Dockerfile.training
     │   ├── src/  tests/  notebooks/  data/  scripts/  models/  docs/
     │
-    └── phase-2/                    # Recomendação E-commerce — em construção
+    └── phase-2/                    # Recomendação E-commerce — pipeline Docker + DVC + MLflow funcional
         ├── README.md
-        ├── docs/                   # challenge, objetivos, etapas, avaliação, arquitetura
-        ├── src/  tests/  notebooks/  configs/  data/  scripts/
+        ├── docker/                 # Dockerfile.app (multi-stage)
+        ├── docker-compose.yml      # serviços: mlflow, train, api
+        ├── dvc.yaml / dvc.lock     # pipeline: preprocess → feature_eng → train → evaluate
+        ├── docs/                   # challenge, objetivos, etapas, avaliação, model_card
+        ├── src/                    # configs, data, features, models, evaluation, app (API)
+        ├── scripts/                # validate_env, compare_models, register_model
+        ├── tests/  notebooks/  data/  models/  metrics/
         └── .env.example
 ```
 
