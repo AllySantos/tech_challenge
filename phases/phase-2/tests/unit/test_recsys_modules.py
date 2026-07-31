@@ -8,6 +8,7 @@ import pytest
 import scipy.sparse as sp
 import torch
 
+import src.models.train as train_module
 from src.data.preprocess import load_events, preprocess
 from src.evaluation.evaluator import (
     evaluate,
@@ -19,7 +20,6 @@ from src.evaluation.evaluator import (
 from src.features.feature_engineer import create_interaction_matrix, run_feature_engineering
 from src.models.baseline import PopularityRecommender
 from src.models.factory import ModelFactory
-import src.models.train as train_module
 from src.models.train import MLPRecommender, prepare_data, set_seeds
 
 
@@ -78,10 +78,7 @@ def test_run_feature_engineering_writes_files(tmp_path):
     output_dir = tmp_path / "output"
 
     input_path.write_text(
-        "user_idx,item_idx,event\n"
-        "0,0,view\n"
-        "0,1,transaction\n"
-        "1,0,addtocart\n",
+        "user_idx,item_idx,event\n0,0,view\n0,1,transaction\n1,0,addtocart\n",
         encoding="utf-8",
     )
 
@@ -185,7 +182,11 @@ def test_train_saves_metrics_file(tmp_path, monkeypatch):
             return False
 
     monkeypatch.setattr(train_module.mlflow, "start_run", lambda *args, **kwargs: DummyRun())
-    monkeypatch.setattr(train_module.mlflow.pytorch, "log_model", lambda model, name, serialization_format: SimpleNamespace(model_uri="logged://model"))
+    monkeypatch.setattr(
+        train_module.mlflow.pytorch,
+        "log_model",
+        lambda model, name, serialization_format: SimpleNamespace(model_uri="logged://model"),
+    )
 
     train_module.train(
         matrix_path=str(matrix_path),

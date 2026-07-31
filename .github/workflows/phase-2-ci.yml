@@ -33,7 +33,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install poetry
-          poetry install --no-interaction --no-ansi
+          poetry install --no-interaction --no-ansi --with dev
 
       - name: Lint with Ruff
         run: |
@@ -59,7 +59,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install poetry
-          poetry install --no-interaction --no-ansi
+          poetry install --no-interaction --no-ansi --with dev
 
       - name: Run Unit Tests
         run: |
@@ -86,7 +86,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install poetry
-          poetry install --no-interaction --no-ansi
+          poetry install --no-interaction --no-ansi --with dev
 
       - name: Run Smoke / E2E Tests
         run: |
