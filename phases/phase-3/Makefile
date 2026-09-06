@@ -4,7 +4,8 @@ SHELL := /bin/bash
 POETRY ?= poetry
 COMPOSE ?= docker compose
 
-.PHONY: help install train serve up down logs load bench report test lint fmt airflow clean
+.PHONY: help install train serve up down logs load bench report test lint fmt airflow \
+        plan-aws build-aws destroy-aws validate-aws push-image seed-models clean
 
 help: ## Lista os alvos disponíveis
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -50,6 +51,41 @@ lint: ## Verifica lint e formatação
 fmt: ## Aplica a formatação
 	$(POETRY) run ruff format src/ tests/ scripts/ airflow/
 	$(POETRY) run ruff check --fix src/ tests/ scripts/ airflow/
+
+# --- AWS -------------------------------------------------------------------
+# O Terraform vive em src/infra/. `validate-aws` não precisa de credencial;
+# os demais alvos precisam de um perfil AWS configurado.
+
+TF ?= terraform
+TF_DIR := src/infra
+
+validate-aws: ## Valida o Terraform sem acessar a AWS
+	$(TF) -chdir=$(TF_DIR) init -backend=false -input=false
+	$(TF) -chdir=$(TF_DIR) fmt -check
+	$(TF) -chdir=$(TF_DIR) validate
+
+plan-aws: ## Mostra o plano de infraestrutura (somente leitura)
+	$(TF) -chdir=$(TF_DIR) init -input=false
+	$(TF) -chdir=$(TF_DIR) plan -out=tfplan
+
+build-aws: ## Provisiona a infraestrutura na AWS
+	$(TF) -chdir=$(TF_DIR) apply tfplan
+
+destroy-aws: ## Destroi a infraestrutura
+	$(TF) -chdir=$(TF_DIR) destroy
+
+AWS_REGION ?= us-east-1
+
+push-image: ## Builda e publica a imagem da API no ECR
+	@REPO=$$($(TF) -chdir=$(TF_DIR) output -raw ecr_repository_url) && \
+	aws ecr get-login-password --region $(AWS_REGION) \
+		| docker login --username AWS --password-stdin $${REPO%%/*} && \
+	docker build --platform linux/amd64 -f docker/Dockerfile.api -t $$REPO:app-latest . && \
+	docker push $$REPO:app-latest
+
+seed-models: ## Envia o registry local de modelos para o bucket S3
+	@BUCKET=$$($(TF) -chdir=$(TF_DIR) output -raw models_bucket) && \
+	aws s3 sync models/ s3://$$BUCKET/models/ --exclude '.gitkeep'
 
 clean: ## Remove artefatos gerados
 	rm -rf data/raw/*.csv data/processed/*.csv models/*/ models/current.json \

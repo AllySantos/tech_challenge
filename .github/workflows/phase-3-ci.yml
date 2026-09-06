@@ -132,6 +132,29 @@ jobs:
           fi
           airflow dags list | grep triage_training_pipeline
 
+  terraform-validate:
+    name: Validação do Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+
+      # Sem credenciais e sem backend: valida sintaxe, tipos e referências
+      # entre recursos sem tocar em nenhuma conta AWS.
+      - name: Terraform fmt
+        run: terraform -chdir=src/infra fmt -check -diff
+
+      - name: Terraform init
+        run: terraform -chdir=src/infra init -backend=false -input=false
+
+      - name: Terraform validate
+        run: terraform -chdir=src/infra validate
+
   docker-build:
     name: Build da imagem de inferência
     runs-on: ubuntu-latest
@@ -173,3 +196,101 @@ jobs:
           docker logs triage-ci
           docker rm -f triage-ci
           exit 1
+
+  deploy:
+    name: Deploy na AWS
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test, docker-build, terraform-validate]
+    # Desligado por padrão. A infraestrutura precisa existir antes (make
+    # build-aws) e a variável AWS_DEPLOY_ENABLED precisa ser definida como
+    # 'true' no repositório — sem isso, o job é pulado em vez de falhar.
+    if: github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ENABLED == 'true'
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+      APP_NAME: medical-triage
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.APP_NAME }}-github-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./phases/phase-3
+          file: ./phases/phase-3/docker/Dockerfile.api
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}:app-latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Substitui a imagem na task definition corrente e força um novo deploy.
+      # O circuit breaker do serviço reverte sozinho se as tasks novas não
+      # ficarem saudáveis.
+      - name: Deploy to ECS
+        run: |
+          set -euo pipefail
+
+          aws ecs describe-task-definition \
+            --task-definition "${APP_NAME}-api" \
+            --query taskDefinition > task-definition.json
+
+          python - <<'PY'
+          import json, os
+
+          with open("task-definition.json") as handle:
+              task = json.load(handle)
+
+          image = f"{os.environ['REGISTRY']}/{os.environ['APP_NAME']}:{os.environ['GITHUB_SHA']}"
+          for container in task["containerDefinitions"]:
+              if container["name"] in ("api", "train"):
+                  container["image"] = image
+
+          for field in (
+              "taskDefinitionArn", "revision", "status", "requiresAttributes",
+              "compatibilities", "registeredAt", "registeredBy",
+          ):
+              task.pop(field, None)
+
+          with open("task-definition.json", "w") as handle:
+              json.dump(task, handle)
+          PY
+
+          REVISION=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+
+          aws ecs update-service \
+            --cluster "${APP_NAME}-cluster" \
+            --service "${APP_NAME}-api" \
+            --task-definition "$REVISION" \
+            --query 'service.serviceName' --output text
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          APP_NAME: ${{ env.APP_NAME }}
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${{ env.APP_NAME }}-cluster" \
+            --services "${{ env.APP_NAME }}-api"
