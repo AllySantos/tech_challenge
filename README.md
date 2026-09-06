@@ -12,6 +12,7 @@ Cada fase vive em sua própria pasta sob [`phases/`](phases/) com `README`, depe
 | ---- | ------------------------------------ | -------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | 1    | Churn Prediction (Telco)             | ✅ Entregue                                  | [phases/phase-1/README.md](phases/phase-1/README.md) | —                                                                                              |
 | 2    | Sistema de Recomendação E-commerce   | 🔧 Pipeline funcional · finalizando entrega | [phases/phase-2/README.md](phases/phase-2/README.md) | [Fase 2 — Sistema de Recomendação](https://github.com/AllySantos/tech_challenge/milestones)   |
+| 3    | Triagem de Laudos Médicos (NLP)      | 🔧 Em desenvolvimento                       | [phases/phase-3/README.md](phases/phase-3/README.md) | —                                                                                              |
 
 > Novas fases entram como `phases/phase-N/` seguindo o mesmo padrão.
 
@@ -57,7 +58,9 @@ tech_challenge/
 ├── LICENSE
 ├── .github/
 │   ├── workflows/
-│   │   └── phase-1-ci.yml          # CI específica da Fase 1 (path-filter em phases/phase-1/**)
+│   │   ├── phase-1-ci.yml          # CI específica da Fase 1 (path-filter em phases/phase-1/**)
+│   │   ├── phase-2-ci.yml
+│   │   └── phase-3-ci.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── PULL_REQUEST_TEMPLATE.md
 └── phases/
@@ -69,16 +72,28 @@ tech_challenge/
     │   ├── Dockerfile.training
     │   ├── src/  tests/  notebooks/  data/  scripts/  models/  docs/
     │
-    └── phase-2/                    # Recomendação E-commerce — pipeline Docker + DVC + MLflow funcional
+    ├── phase-2/                    # Recomendação E-commerce — pipeline Docker + DVC + MLflow funcional
+    │   ├── README.md
+    │   ├── docker/                 # Dockerfile.app (multi-stage)
+    │   ├── docker-compose.yml      # serviços: mlflow, train, api
+    │   ├── dvc.yaml / dvc.lock     # pipeline: preprocess → feature_eng → train → evaluate
+    │   ├── docs/                   # challenge, objetivos, etapas, avaliação, model_card
+    │   ├── src/                    # configs, data, features, models, evaluation, app (API)
+    │   ├── scripts/                # validate_env, compare_models, register_model
+    │   ├── tests/  notebooks/  data/  models/  metrics/
+    │   └── .env.example
+    │
+    └── phase-3/                    # Triagem de Laudos — API ONNX + Airflow + Prometheus/Grafana
         ├── README.md
-        ├── docker/                 # Dockerfile.app (multi-stage)
-        ├── docker-compose.yml      # serviços: mlflow, train, api
-        ├── dvc.yaml / dvc.lock     # pipeline: preprocess → feature_eng → train → evaluate
-        ├── docs/                   # challenge, objetivos, etapas, avaliação, model_card
-        ├── src/                    # configs, data, features, models, evaluation, app (API)
-        ├── scripts/                # validate_env, compare_models, register_model
-        ├── tests/  notebooks/  data/  models/  metrics/
-        └── .env.example
+        ├── Makefile
+        ├── docker-compose.yml      # api + prometheus + grafana; profiles: orchestration, load
+        ├── docker/                 # Dockerfile.api, Dockerfile.airflow
+        ├── airflow/dags/           # triage_training_pipeline
+        ├── monitoring/             # prometheus.yml + provisionamento do Grafana
+        ├── docs/                   # model_card, optimization, images
+        ├── src/                    # configs, data, models, evaluation, inference, app, pipeline
+        ├── scripts/                # loadgen, report_latency
+        └── tests/  data/  models/  metrics/  reports/
 ```
 
 ---
