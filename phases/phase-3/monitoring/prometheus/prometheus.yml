@@ -1,0 +1,20 @@
+# Intervalo de 5s: o serviço responde em poucos milissegundos e a demonstração
+# precisa que os painéis reajam à carga em segundos, não em minutos.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+  external_labels:
+    project: medical-triage
+    phase: fase-3
+
+scrape_configs:
+  - job_name: triage-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+        labels:
+          service: triage-api
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

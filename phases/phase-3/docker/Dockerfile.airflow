@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+
+# O Airflow é instalado a partir da imagem oficial; sobre ela adicionamos
+# apenas as dependências de ML que as tasks do pipeline precisam. Instalar o
+# Airflow via Poetry junto com o resto do projeto travaria a resolução, porque
+# ele fixa um conjunto próprio e bastante restritivo de versões.
+FROM apache/airflow:3.0.3-python3.11
+
+USER root
+# `locales` acompanha o build-essential porque o grafo ONNX exige a locale
+# en_US.UTF-8 quando as tasks de benchmark abrem uma sessão de inferência.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential locales \
+    && sed -i '/^# *en_US.UTF-8 UTF-8/s/^# *//' /etc/locale.gen \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
+
+USER airflow
+
+COPY docker/requirements-airflow.txt /tmp/requirements-airflow.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-airflow.txt
+
+ENV PYTHONPATH=/opt/project

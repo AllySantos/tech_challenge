@@ -1,0 +1,119 @@
+# Stack completa da Fase 3.
+#
+#   docker compose up -d                      → API + Prometheus + Grafana
+#   docker compose --profile orchestration up → acrescenta o Airflow
+#   docker compose --profile load up loadgen  → gera tráfego para os painéis
+#
+# O Airflow fica atrás de um profile porque não faz parte do caminho de
+# serving: quem só quer ver a API e os dashboards não paga o custo de subi-lo.
+
+name: medical-triage
+
+x-project-volume: &project-volume
+  type: bind
+  source: .
+  target: /opt/project
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: medical-triage-api:latest
+    container_name: triage-api
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      INFERENCE_BACKEND: ${INFERENCE_BACKEND:-onnx-pruned}
+      MODELS_DIR: /app/models
+    ports:
+      - "8000:8000"
+    volumes:
+      # Somente leitura: o serving consome os artefatos que o pipeline de
+      # treino produziu, e nunca os modifica.
+      - ./models:/app/models:ro
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: triage-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: triage-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    ports:
+      - "3000:3000"
+    volumes:
+      # Datasource e dashboard entram por provisionamento: subir a stack em
+      # outra máquina reproduz os painéis sem nenhum clique na interface.
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  loadgen:
+    profiles: ["load"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: medical-triage-api:latest
+    container_name: triage-loadgen
+    command: ["python", "-m", "scripts.loadgen", "--url", "http://api:8000", "--duration", "300"]
+    depends_on:
+      - api
+    restart: "no"
+
+  airflow:
+    profiles: ["orchestration"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
+    image: medical-triage-airflow:latest
+    container_name: triage-airflow
+    command: ["standalone"]
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/project/airflow/dags
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:-fase3-triagem-dev-secret}
+      # Sem tela de login nesta stack local: o SimpleAuthManager sorteia uma
+      # senha nova a cada boot, o que tornaria a UI inacessível sem ir buscar
+      # o arquivo gerado dentro do container. Vale só para desenvolvimento —
+      # um deploy real usa um auth manager de verdade atrás de SSO.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      AIRFLOW_HOME: /opt/airflow
+      PYTHONPATH: /opt/project
+    ports:
+      - "8080:8080"
+    volumes:
+      # O projeto inteiro é montado em leitura/escrita para que as tasks
+      # gravem novas versões de modelo no mesmo diretório que a API lê.
+      - *project-volume
+      - airflow-data:/opt/airflow
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  airflow-data:
