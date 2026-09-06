@@ -120,6 +120,32 @@ A classe `normal` é a mais fraca (F1 0,612), o que é coerente com sua origem:
 ela agrega "condições patológicas gerais", a categoria mais heterogênea e
 menos linguisticamente distinta do corpus.
 
+### Sensibilidade ao tamanho da entrada
+
+O corpus é formado por abstracts com 182 palavras em média (mediana 179). Como
+o modelo é TF-IDF, ele depende do acúmulo de termos ao longo do texto — e
+degrada quando recebe entradas muito mais curtas do que aquilo que viu no
+treino.
+
+Medido truncando os laudos do conjunto de validação:
+
+| Palavras na entrada | Acurácia | Recall de `urgente` |
+| ---: | ---: | ---: |
+| 10 | 64,7% | 64,7% |
+| 25 | 69,9% | 69,3% |
+| 50 | 71,3% | 72,2% |
+| 100 | 72,6% | 74,1% |
+| Laudo completo | 72,8% | 75,9% |
+
+A partir de 50 palavras o desempenho já está a pouco mais de um ponto do teto.
+Abaixo disso ele cai rápido: uma frase de dez palavras custa 8 pontos de
+acurácia e 11 de recall na classe crítica.
+
+**Consequência prática:** o serviço é adequado a laudos completos, não a
+descrições telegráficas. Se o caso de uso incluir entradas curtas — uma queixa
+digitada na recepção, por exemplo —, o modelo precisa ser retreinado sobre
+textos desse tamanho, não apenas reaproveitado.
+
 ## Latência
 
 Medida com 500 inferências unitárias por backend, após 50 de aquecimento, com
