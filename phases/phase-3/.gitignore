@@ -1,0 +1,25 @@
+# Artefatos gerados pelo pipeline
+data/raw/*
+data/processed/*
+models/*
+metrics/*
+reports/*
+!**/.gitkeep
+
+# Ambiente
+.env
+.venv/
+__pycache__/
+*.py[cod]
+
+# Ferramentas
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Airflow
+airflow/logs/
+airflow/*.db
+airflow/*.cfg
