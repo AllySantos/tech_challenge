@@ -198,6 +198,13 @@ make build-aws      # provisiona (cobra)
 make destroy-aws
 ```
 
+A stack é a **versão enxuta** de propósito — NAT único, HTTP sem TLS, estado
+local. São cortes de custo adequados a um projeto acadêmico, e cada um está
+mapeado contra o equivalente de produção em
+[`docs/deploy_aws.md`](docs/deploy_aws.md). O desenho não muda: tasks em subnet
+privada, serving por registry somente-leitura, portão de qualidade e OIDC no
+lugar de chave de acesso continuam valendo nos dois casos.
+
 Dois pontos que valem destaque:
 
 - **O código da aplicação não muda entre local e nuvem.** Localmente a API lê
@@ -585,5 +592,9 @@ phases/phase-3/
 - **Airflow com SQLite e executor local.** Adequado para demonstrar a
   orquestração; produção exigiria backend Postgres e executor distribuído.
 - **A infraestrutura AWS não foi aplicada.** O Terraform está validado e com
-  plano gerado, mas nenhum recurso existe. As limitações específicas da stack
-  (estado local, listener em HTTP, NAT único) estão em `docs/deploy_aws.md`.
+  plano gerado, mas nenhum recurso existe.
+- **A stack provisionada é a versão enxuta, de propósito.** NAT único, listener
+  em HTTP, estado do Terraform local e sem WAF — cortes de custo e escopo
+  adequados a um trabalho que precisa ser provisionado e destruído por quem
+  avalia. O que mudaria em produção está mapeado item a item em
+  [`docs/deploy_aws.md`](docs/deploy_aws.md#este-projeto-não-é-uma-stack-de-produção--e-isso-é-deliberado).

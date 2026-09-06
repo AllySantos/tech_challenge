@@ -149,22 +149,54 @@ Ordem de grandeza para `us-east-1`, com a stack ligada o mês inteiro:
 | S3, ECR, CloudWatch | < US$ 5 |
 | **Total** | **~US$ 100/mês** |
 
-Dois cortes óbvios se o objetivo for apenas demonstrar: remover o par
-AMP + AMG (−US$ 14 e um usuário) e colocar as tasks em subnet pública para
-dispensar o NAT (−US$ 33), ao custo de expor as tasks à internet. Nenhum dos
-dois está aplicado aqui — a configuração padrão privilegia o desenho correto
-sobre o mais barato.
+Dois cortes óbvios se o objetivo for só demonstrar: remover o par AMP + AMG
+(−US$ 14 e um usuário) e colocar as tasks em subnet pública para dispensar o
+NAT (−US$ 33), ao custo de expor as tasks à internet. Nenhum dos dois está
+aplicado — a configuração padrão privilegia o desenho correto sobre o mais
+barato.
 
-## Limitações
+Uma stack de produção custaria mais: o segundo NAT, o WAF, a retenção maior de
+logs e as contas separadas por ambiente somam antes de qualquer aumento de
+tráfego. A seção seguinte detalha o que muda.
 
-- **Estado local.** O backend do Terraform não está configurado; o `tfstate`
-  fica na máquina de quem aplica. Para uso em equipe, aponte para um bucket S3
-  com trava no DynamoDB.
-- **HTTP, sem TLS.** O listener é porta 80. Um domínio real exigiria
-  certificado no ACM e listener 443 — omitido porque depende de um domínio que
-  o projeto não tem.
-- **NAT único.** Um só NAT Gateway para as duas AZs, por economia. Se a AZ dele
-  cair, as tasks perdem saída para a internet.
-- **Recarga de modelo exige reciclagem.** A API carrega o artefato na subida,
-  então promover uma versão nova pede um `--force-new-deployment`. Encadear
-  isso ao fim do retreino é o próximo passo natural.
+## Este projeto não é uma stack de produção — e isso é deliberado
+
+O que está aqui é a versão **enxuta**: o desenho arquitetural correto, com os
+cortes de custo e de escopo que fazem sentido para um trabalho acadêmico que
+precisa ser provisionado e destruído por quem for avaliar. Nenhum desses cortes
+é acidental, e nenhum deles muda a arquitetura — mudam o nível de redundância,
+de segurança de borda e de operação.
+
+A tabela abaixo é o mapa entre as duas versões.
+
+| Aspecto | Aqui | Em produção | Impacto |
+| --- | --- | --- | --- |
+| **NAT Gateway** | Um só, na primeira AZ | Um por AZ | Se a AZ do NAT cair, as tasks da outra AZ perdem saída para a internet. Economiza ~US$ 33/mês |
+| **TLS** | Listener HTTP na porta 80 | Certificado no ACM, listener 443, redirect 80→443, domínio no Route 53 | Tráfego em claro. Só não está aqui porque depende de um domínio que o projeto não tem |
+| **Estado do Terraform** | Arquivo local na máquina de quem aplica | Bucket S3 versionado com trava | Duas pessoas aplicando ao mesmo tempo corrompem o estado. Inviável em equipe |
+| **Borda** | ALB aberto | WAF com rate limiting e regras gerenciadas | Sem proteção contra abuso ou varredura automatizada |
+| **Alarmes** | Tópico SNS criado, sem inscritos | Inscrição em e-mail, PagerDuty ou Slack | Os alarmes disparam e ninguém fica sabendo |
+| **Orquestração do retreino** | Task Fargate agendada | MWAA ou Airflow em EKS, se o pipeline ramificar | Perde-se UI, retry por task e visualização do grafo |
+| **Recarga de modelo** | Exige `--force-new-deployment` | Reciclagem encadeada ao fim do retreino, ou recarga a quente | Uma versão promovida não entra em serving sozinha |
+| **Retenção de logs** | 14 dias | Retenção maior, com arquivamento em S3 Glacier | Insuficiente para auditoria clínica |
+| **Provider OIDC** | Flag `create_github_oidc_provider` | Gerenciado uma vez, em um módulo de plataforma separado | Só existe um por URL em cada conta; a Fase 1 já cria o dela |
+| **Conta AWS** | Uma só | Contas separadas por ambiente, com organização e SCP | Sem isolamento entre o que é experimento e o que é produção |
+
+O que **não** muda entre as duas versões, e é onde está o valor do exercício:
+o desenho de rede com as tasks em subnet privada, o contrato de serving via
+registry somente-leitura, o portão de qualidade que barra a promoção, a
+federação OIDC no lugar de chave de acesso e as métricas do modelo indo para o
+Prometheus. A ponte entre "trabalho de faculdade" e "produção" aqui é uma lista
+de itens operacionais, não uma reescrita.
+
+### Um caso à parte: a natureza clínica do sistema
+
+Os itens acima são de infraestrutura. Um sistema de triagem que toque paciente
+real tem uma lista própria, e mais pesada: rótulos de urgência atribuídos por
+triagem clínica em vez de derivados de taxonomia (ver
+[`model_card.md`](model_card.md)), corpus em português, auditoria de disparidade
+de desempenho entre grupos de pacientes, retenção e rastreabilidade compatíveis
+com a LGPD, e validação clínica formal antes de qualquer uso assistencial.
+
+Nenhum ajuste de Terraform resolve isso. É a limitação que separa o projeto de
+um produto, e ela é de dados e de processo, não de nuvem.
