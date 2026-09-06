@@ -22,6 +22,7 @@ em Prometheus + Grafana.
 
 - [Como rodar](#como-rodar)
 - [Decisão arquitetural de deploy em nuvem](#decisão-arquitetural-de-deploy-em-nuvem)
+- [Infraestrutura como código](#infraestrutura-como-código)
 - [Arquitetura da solução](#arquitetura-da-solução)
 - [O modelo e os rótulos de urgência](#o-modelo-e-os-rótulos-de-urgência)
 - [Otimização de latência](#otimização-de-latência)
@@ -177,6 +178,43 @@ Kubernetes na casa e outros serviços para amortizar esse custo — não para um
 
 A troca é de substrato, não de arquitetura: os mesmos limites de latência, o
 mesmo portão de qualidade e as mesmas métricas continuam valendo.
+
+---
+
+## Infraestrutura como código
+
+A decisão acima está escrita em Terraform, em [`src/infra/`](src/infra) —
+58 recursos cobrindo rede, serving, retreino agendado e observabilidade
+gerenciada. O passo a passo, o desenho das tasks e a estimativa de custo estão
+em [`docs/deploy_aws.md`](docs/deploy_aws.md).
+
+**Nada foi aplicado.** A configuração está formatada, validada e com plano
+gerado; quem quiser conferir provisiona na própria conta:
+
+```bash
+make validate-aws   # não precisa de credencial AWS
+make plan-aws       # somente leitura
+make build-aws      # provisiona (cobra)
+make destroy-aws
+```
+
+A stack é a **versão enxuta** de propósito — NAT único, HTTP sem TLS, estado
+local. São cortes de custo adequados a um projeto acadêmico, e cada um está
+mapeado contra o equivalente de produção em
+[`docs/deploy_aws.md`](docs/deploy_aws.md). O desenho não muda: tasks em subnet
+privada, serving por registry somente-leitura, portão de qualidade e OIDC no
+lugar de chave de acesso continuam valendo nos dois casos.
+
+Dois pontos que valem destaque:
+
+- **O código da aplicação não muda entre local e nuvem.** Localmente a API lê
+  `models/` por um bind mount somente-leitura; na AWS, um container de
+  inicialização sincroniza o mesmo diretório a partir do S3 e só então a API
+  sobe. O contrato de serving é idêntico nos dois lados.
+- **O retreino não usa MWAA.** Uma task Fargate agendada pelo EventBridge roda
+  exatamente o mesmo `python -m src.pipeline`, com o mesmo portão de qualidade,
+  por uma fração do custo de um ambiente Airflow gerenciado ligado o tempo
+  todo. O raciocínio e o que se perde nessa troca estão documentados.
 
 ---
 
@@ -433,8 +471,7 @@ qualidade cair de forma mensurável.
 ## CI/CD
 
 O workflow [`phase-3-ci.yml`](../../.github/workflows/phase-3-ci.yml) dispara em
-push na `main` e em qualquer pull request que toque `phases/phase-3/**`, com
-cinco jobs:
+push na `main` e em qualquer pull request que toque `phases/phase-3/**`:
 
 | Job | O que faz |
 | --- | --- |
@@ -442,7 +479,9 @@ cinco jobs:
 | `unit-test` | `pytest tests/unit` com cobertura mínima de 70% |
 | `e2e-test` | `pytest tests/e2e` — treina um modelo de verdade e exercita a API nos quatro backends |
 | `dag-validate` | Instala o Airflow, serializa a DAG e falha se houver erro de importação |
+| `terraform-validate` | `fmt -check`, `init` e `validate` da infraestrutura, sem credencial e sem tocar em conta alguma |
 | `docker-build` | Builda a imagem da API, sobe o container **sem modelo montado** e verifica que ele entra em modo degradado em vez de morrer |
+| `deploy` | Publica no ECR e atualiza o serviço ECS via OIDC. **Desligado por padrão** — só roda com `AWS_DEPLOY_ENABLED=true` |
 
 Os dois últimos existem por motivos específicos. Erro de importação em DAG não
 quebra o CI da aplicação — só aparece quando o scheduler já está em produção.
@@ -515,6 +554,7 @@ phases/phase-3/
 │   ├── prometheus/prometheus.yml
 │   └── grafana/provisioning/    # datasource + dashboard (11 painéis)
 ├── src/
+│   ├── infra/                   # Terraform: VPC, ECS, ALB, S3, EventBridge, AMP/AMG
 │   ├── configs/settings.py      # Pydantic Settings, mapeamento de urgência
 │   ├── data/                    # ingest, preprocess
 │   ├── models/                  # train, prune, export, registry
@@ -529,6 +569,7 @@ phases/phase-3/
 └── docs/
     ├── model_card.md
     ├── optimization.md
+    ├── deploy_aws.md
     └── images/
 ```
 
@@ -550,3 +591,10 @@ phases/phase-3/
   os candidatos naturais a virarem alertas de desvio.
 - **Airflow com SQLite e executor local.** Adequado para demonstrar a
   orquestração; produção exigiria backend Postgres e executor distribuído.
+- **A infraestrutura AWS não foi aplicada.** O Terraform está validado e com
+  plano gerado, mas nenhum recurso existe.
+- **A stack provisionada é a versão enxuta, de propósito.** NAT único, listener
+  em HTTP, estado do Terraform local e sem WAF — cortes de custo e escopo
+  adequados a um trabalho que precisa ser provisionado e destruído por quem
+  avalia. O que mudaria em produção está mapeado item a item em
+  [`docs/deploy_aws.md`](docs/deploy_aws.md#este-projeto-não-é-uma-stack-de-produção--e-isso-é-deliberado).
