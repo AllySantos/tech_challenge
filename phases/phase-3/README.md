@@ -332,7 +332,7 @@ make bench && make report
 ```bash
 curl -X POST localhost:8000/predict \
   -H 'content-type: application/json' \
-  -d '{"text":"acute myocardial infarction with st segment elevation, persistent chest pain radiating to the left arm, troponin markedly elevated"}'
+  -d '{"text":"angiographic changes suggestive of vasospasm in migraine complicated by stroke. a 30-year-old woman with a history of common migraine developed a permanent left homonymous hemianopia during a typical headache. ct scan demonstrated a right posterior cerebral infarction and angiography showed irregular narrowing of the ipsilateral posterior cerebral artery, suggestive of vasospasm. in the case no risk factors for atherosclerotic stroke were present except for smoking, and no other causes of stroke could be found."}'
 ```
 
 ```json
@@ -349,6 +349,42 @@ curl -X POST localhost:8000/predict \
 A resposta carrega a versão do modelo e o backend que a atendeu. Isso não é
 enfeite: quando um resultado é contestado, é o que permite reconstruir qual
 artefato produziu aquela classificação.
+
+### Exemplos para testar
+
+Os três laudos abaixo vêm do conjunto de validação, um de cada classe. O primeiro
+já aparece pré-preenchido no Swagger — basta abrir `/docs`, clicar em **Try it
+out** e **Execute**.
+
+<details>
+<summary><code>urgente</code> · infarto cerebral · confiança 0,998</summary>
+
+```
+angiographic changes suggestive of vasospasm in migraine complicated by stroke. a 30-year-old woman with a history of common migraine developed a permanent left homonymous hemianopia during a typical headache. ct scan demonstrated a right posterior cerebral infarction and angiography showed irregular narrowing of the ipsilateral posterior cerebral artery, suggestive of vasospasm. in the case no risk factors for atherosclerotic stroke were present except for smoking, and no other causes of stroke could be found.
+```
+</details>
+
+<details>
+<summary><code>atencao</code> · tumor com indicação de excisão · confiança 0,993</summary>
+
+```
+proliferating trichilemmal tumor: report of a case and review of the literature. the authors report a case of proliferating trichilemmal tumor and review the related literature. although considered biologically benign, malignant proliferating trichilemmal tumor have been reported. the authors emphasize the importance of recognizing that the tumors can occur in individuals in their 20s and 30s, and that the tumors should be excised with a margin of normal tissue. routine follow-up is recommended.
+```
+</details>
+
+<details>
+<summary><code>normal</code> · complicação de cateterismo venoso · confiança 0,953</summary>
+
+```
+laryngeal oedema from a neck haematoma. a complication of internal jugular vein cannulation. laryngeal oedema occurred after formation of a neck haematoma after attempted internal jugular vein cannulation. this resulted in complete respiratory obstruction and respiratory arrest and it was impossible to ventilate her lungs manually or intubate her trachea. oxygenation of the patient was only possible using transtracheal ventilation.
+```
+</details>
+
+> Os exemplos são longos de propósito. O corpus tem 182 palavras por laudo em
+> média, e o modelo depende do acúmulo de termos: abaixo de 50 palavras a
+> acurácia cai de 72,8% para 64,7%. Uma frase curta pode sair classificada com
+> confiança perto do empate — o comportamento está medido em
+> [`docs/model_card.md`](docs/model_card.md#sensibilidade-ao-tamanho-da-entrada).
 
 ### Demais endpoints
 

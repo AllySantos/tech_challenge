@@ -13,8 +13,17 @@ class TriageRequest(BaseModel):
     text: str = Field(
         ...,
         min_length=1,
-        description="Texto integral do laudo médico.",
-        examples=["Patient presents with acute chest pain radiating to the left arm..."],
+        description=(
+            "Texto integral do laudo médico. O modelo foi treinado sobre laudos de "
+            "182 palavras em média e degrada com entradas curtas — abaixo de 50 "
+            "palavras a acurácia cai de 72,8% para 64,7% (ver docs/model_card.md)."
+        ),
+        examples=[
+            # Laudo real do conjunto de validação, classificado como `urgente` com
+            # 0,9976 de confiança. Serve de exemplo pronto no Swagger para quem
+            # for testar a API sem ter o dataset em mãos.
+            "angiographic changes suggestive of vasospasm in migraine complicated by stroke. a 30-year-old woman with a history of common migraine developed a permanent left homonymous hemianopia during a typical headache. ct scan demonstrated a right posterior cerebral infarction and angiography showed irregular narrowing of the ipsilateral posterior cerebral artery, suggestive of vasospasm. in the case no risk factors for atherosclerotic stroke were present except for smoking, and no other causes of stroke could be found."
+        ],
     )
 
     @field_validator("text")
