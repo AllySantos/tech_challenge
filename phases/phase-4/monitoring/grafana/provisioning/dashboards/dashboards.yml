@@ -3,4 +3,4 @@ providers:
   - name: credit-scoring
     type: file
     options:
-      path: /var/lib/grafana/dashboards
+      path: /etc/grafana/provisioning/dashboards

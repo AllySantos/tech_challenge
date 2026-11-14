@@ -20,6 +20,5 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin   # apenas para uso local/demonstração
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
