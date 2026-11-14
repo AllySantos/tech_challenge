@@ -1,0 +1,67 @@
+{
+  "n_reps": 30,
+  "scenarios": [
+    {
+      "scenario": "controle (nenhuma causa)",
+      "auc": 0.7788,
+      "auc_std": 0.0,
+      "recall": 0.3571,
+      "default_rate": 0.2212,
+      "delta_auc": 0.0
+    },
+    {
+      "scenario": "só inflação (faturas)",
+      "auc": 0.7768,
+      "auc_std": 0.0,
+      "recall": 0.3734,
+      "default_rate": 0.2212,
+      "delta_auc": -0.002
+    },
+    {
+      "scenario": "só mais atrasos (pay_1)",
+      "auc": 0.7717,
+      "auc_std": 0.0019,
+      "recall": 0.3815,
+      "default_rate": 0.2212,
+      "delta_auc": -0.0071
+    },
+    {
+      "scenario": "só perfil mais jovem (age)",
+      "auc": 0.778,
+      "auc_std": 0.0005,
+      "recall": 0.3541,
+      "default_rate": 0.2212,
+      "delta_auc": -0.0008
+    },
+    {
+      "scenario": "só data drift (as 3 causas)",
+      "auc": 0.7676,
+      "auc_std": 0.0019,
+      "recall": 0.3888,
+      "default_rate": 0.2212,
+      "delta_auc": -0.0112
+    },
+    {
+      "scenario": "só concept drift",
+      "auc": 0.6506,
+      "auc_std": 0.0035,
+      "recall": 0.2323,
+      "default_rate": 0.3417,
+      "delta_auc": -0.1282
+    },
+    {
+      "scenario": "tudo (período 4)",
+      "auc": 0.6535,
+      "auc_std": 0.004,
+      "recall": 0.2826,
+      "default_rate": 0.3059,
+      "delta_auc": -0.1253
+    }
+  ],
+  "attribution": {
+    "data_drift": -0.0112,
+    "concept_drift": -0.1282,
+    "interaction": 0.0141,
+    "total": -0.1253
+  }
+}

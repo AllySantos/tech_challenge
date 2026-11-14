@@ -1,0 +1,37 @@
+groups:
+  - name: credit-scoring
+    rules:
+      - alert: DataContractBlocked
+        expr: increase(credit_pipeline_batches_total{status="blocked"}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Lote bloqueado pelo contrato de dados"
+
+      - alert: DataDriftCritical
+        expr: credit_drift_psi_max >= 0.2
+        labels:
+          severity: critical
+        annotations:
+          summary: "PSI maximo acima de 0.2 (drift critico)"
+
+      - alert: DataDriftAttention
+        expr: credit_drift_psi_max >= 0.1 and credit_drift_psi_max < 0.2
+        labels:
+          severity: warning
+        annotations:
+          summary: "PSI maximo entre 0.1 e 0.2 (atencao)"
+
+      - alert: ModelPerformanceDegraded
+        expr: (credit_baseline_auc - credit_model_auc) >= 0.05
+        labels:
+          severity: critical
+        annotations:
+          summary: "AUC caiu 0.05 ou mais em relacao ao baseline"
+
+      - alert: ModelPerformanceWarning
+        expr: (credit_baseline_auc - credit_model_auc) >= 0.03 and (credit_baseline_auc - credit_model_auc) < 0.05
+        labels:
+          severity: warning
+        annotations:
+          summary: "AUC caiu entre 0.03 e 0.05 em relacao ao baseline"
