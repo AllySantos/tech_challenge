@@ -1,0 +1,14 @@
+{
+  "protected_attribute": "sex",
+  "auc_cv": 0.6492,
+  "auc_cv_std": 0.0069,
+  "control_auc": 0.4977,
+  "gap_vs_control": 0.1516,
+  "top_features": {
+    "limit_bal": 0.0984,
+    "pay_3": 0.0962,
+    "age": 0.0938,
+    "education": 0.075,
+    "marriage": 0.0747
+  }
+}

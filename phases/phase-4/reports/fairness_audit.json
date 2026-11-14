@@ -1,0 +1,105 @@
+{
+  "threshold": 0.5,
+  "groups": [
+    {
+      "attribute": "sex_group",
+      "group": "female",
+      "n": 2439,
+      "actual_default": 0.2107,
+      "flag_rate": 0.1169,
+      "tpr": 0.3833,
+      "fpr": 0.0457,
+      "auc": 0.7903
+    },
+    {
+      "attribute": "sex_group",
+      "group": "male",
+      "n": 1561,
+      "actual_default": 0.2377,
+      "flag_rate": 0.1268,
+      "tpr": 0.3801,
+      "fpr": 0.0479,
+      "auc": 0.7909
+    },
+    {
+      "attribute": "age_group",
+      "group": "<30",
+      "n": 1294,
+      "actual_default": 0.2349,
+      "flag_rate": 0.1345,
+      "tpr": 0.4211,
+      "fpr": 0.0465,
+      "auc": 0.7986
+    },
+    {
+      "attribute": "age_group",
+      "group": "30-44",
+      "n": 2017,
+      "actual_default": 0.2018,
+      "flag_rate": 0.1001,
+      "tpr": 0.3219,
+      "fpr": 0.0441,
+      "auc": 0.7722
+    },
+    {
+      "attribute": "age_group",
+      "group": "45+",
+      "n": 689,
+      "actual_default": 0.2525,
+      "flag_rate": 0.1553,
+      "tpr": 0.454,
+      "fpr": 0.0544,
+      "auc": 0.821
+    },
+    {
+      "attribute": "marriage_group",
+      "group": "married",
+      "n": 1828,
+      "actual_default": 0.2314,
+      "flag_rate": 0.1286,
+      "tpr": 0.383,
+      "fpr": 0.052,
+      "auc": 0.7868
+    },
+    {
+      "attribute": "marriage_group",
+      "group": "other",
+      "n": 61,
+      "actual_default": 0.1967,
+      "flag_rate": 0.1311,
+      "tpr": 0.5,
+      "fpr": 0.0408,
+      "auc": 0.7806
+    },
+    {
+      "attribute": "marriage_group",
+      "group": "single",
+      "n": 2111,
+      "actual_default": 0.2132,
+      "flag_rate": 0.1137,
+      "tpr": 0.3778,
+      "fpr": 0.0421,
+      "auc": 0.7941
+    }
+  ],
+  "summary": {
+    "sex_group": {
+      "flag_rate_ratio": 0.921,
+      "tpr_gap": 0.003,
+      "fpr_gap": 0.002,
+      "auc_gap": 0.001
+    },
+    "age_group": {
+      "flag_rate_ratio": 0.645,
+      "tpr_gap": 0.132,
+      "fpr_gap": 0.01,
+      "auc_gap": 0.049
+    },
+    "marriage_group": {
+      "flag_rate_ratio": 0.867,
+      "tpr_gap": 0.122,
+      "fpr_gap": 0.011,
+      "auc_gap": 0.013
+    }
+  }
+}
