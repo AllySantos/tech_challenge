@@ -1,0 +1,35 @@
+[project]
+name = "credit-scoring-observability"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "GFurts",email = "gabriel.g.furtado30@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "pandas (>=2.2,<3)",
+    "scikit-learn (>=1.9.1,<2.0.0)",
+    "xgboost (>=3.4.1,<4.0.0)",
+    "pandera (>=0.36.0,<0.37.0)",
+    "evidently (>=0.7.23,<0.8.0)",
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "xlrd (>=2.0.2,<3.0.0)",
+    "mlflow (>=3.18.0,<4.0.0)",
+    "prometheus-client (>=0.26.0,<0.27.0)"
+]
+
+[tool.poetry]
+packages = [{include = "credit_scoring_observability", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.2.0,<10.0.0)"
+]
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
