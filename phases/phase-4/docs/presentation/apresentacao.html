@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Challenge Fase 4 — Credit Scoring Observability (Alternativa)</title>
+<style>
+  :root {
+    --pink: #ED185C;
+    --pink-soft: rgba(237, 24, 92, 0.16);
+    --pink-glow: rgba(237, 24, 92, 0.32);
+    --bg: #0B0C11;
+    --surface: #141620;
+    --surface-2: #1B1E2B;
+    --border: rgba(255, 255, 255, 0.09);
+    --text: #F4F5F8;
+    --muted: #A2A8BA;
+    --ok: #22C55E;
+    --warn: #F59E0B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #050608;
+    overflow: hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    color: var(--text);
+  }
+  #viewport { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; width: 1200px; height: 675px; transform-origin: center center; flex: none; }
+  .slide {
+    position: absolute; inset: 0; width: 1200px; height: 675px;
+    background: var(--bg);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+    overflow: hidden;
+    display: none;
+    padding: 36px 52px 48px;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+
+  /* Ambient FIAP glows */
+  .glow {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, var(--pink-glow) 0%, rgba(237,24,92,0.08) 45%, transparent 72%);
+    filter: blur(8px);
+  }
+
+  /* Top Header */
+  .topbar {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 26px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .fiap-badge {
+    background: var(--pink);
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(237, 24, 92, 0.35);
+  }
+  .fiap-badge img { height: 22px; display: block; }
+  .brand-meta { font-size: 13px; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; font-weight: 600; }
+  .brand-meta span { color: var(--pink); margin: 0 6px; }
+  .slide-tag {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--pink); background: var(--pink-soft);
+    border: 1px solid rgba(237, 24, 92, 0.35);
+    padding: 6px 14px; border-radius: 999px;
+  }
+
+  /* Typography */
+  .h-hero { font-size: 64px; font-weight: 900; line-height: 1.03; letter-spacing: -1.8px; }
+  .h-section { font-size: 46px; font-weight: 900; line-height: 1.05; letter-spacing: -1.2px; }
+  .accent { color: var(--pink); }
+  .lead { font-size: 16px; line-height: 1.65; color: var(--muted); }
+  b, strong { color: #fff; font-weight: 700; }
+  .hl { color: var(--pink); font-weight: 700; }
+
+  /* Cards / Bento */
+  .card {
+    background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+  }
+  .card-pink {
+    background: linear-gradient(145deg, rgba(237, 24, 92, 0.18) 0%, var(--surface) 70%);
+    border-color: rgba(237, 24, 92, 0.4);
+  }
+
+  /* Slide 1: Cover */
+  .cover-grid {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: 1.25fr 0.85fr; gap: 36px; align-items: center;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .pill {
+    font-size: 12.5px; font-weight: 600; color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: 8px;
+  }
+  .pill i { color: var(--pink); font-style: normal; margin-right: 6px; }
+  .arch-card { display: flex; flex-direction: column; gap: 12px; }
+  .arch-step {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(11, 12, 17, 0.55); border: 1px solid var(--border);
+    padding: 12px 14px; border-radius: 10px;
+  }
+  .arch-num {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: var(--pink); color: #fff; font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .arch-step h4 { font-size: 13.5px; margin-bottom: 2px; }
+  .arch-step p { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+  /* Slide 2: Situation */
+  .sit-grid {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 36px; align-items: center;
+  }
+  .sit-list { display: flex; flex-direction: column; gap: 16px; }
+  .sit-item {
+    display: flex; align-items: flex-start; gap: 18px;
+    border-left: 4px solid var(--pink);
+    padding: 18px 20px;
+  }
+  .sit-num { font-size: 30px; font-weight: 900; color: var(--pink); line-height: 1; flex: none; }
+  .sit-item h3 { font-size: 15px; margin-bottom: 5px; }
+  .sit-item p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+
+  /* Slide 3: Task */
+  .bento-2x2 {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 18px;
+  }
+  .task-card { display: flex; flex-direction: column; justify-content: space-between; }
+  .task-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .task-title { display: flex; align-items: center; gap: 10px; }
+  .task-title .num { font-size: 26px; font-weight: 900; color: var(--pink); }
+  .task-title .lbl { font-size: 15px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+  .task-card p { font-size: 13.8px; color: var(--muted); line-height: 1.58; }
+  .task-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .tag {
+    font-size: 11px; font-weight: 600; color: #E2E5F0;
+    background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;
+  }
+
+  /* Slide 4: Action */
+  .flow-bar {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 18px; margin-bottom: 18px;
+    font-size: 12.5px; font-weight: 700; color: var(--muted);
+  }
+  .flow-bar span.node { color: #fff; }
+  .flow-bar span.arr { color: var(--pink); font-weight: 900; }
+  .bento-3x1 {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;
+  }
+  .act-card { display: flex; flex-direction: column; justify-content: space-between; padding: 26px 24px; }
+  .act-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .act-badge {
+    background: var(--pink); color: #fff; font-size: 13px; font-weight: 900;
+    padding: 4px 11px; border-radius: 6px; letter-spacing: 0.6px;
+  }
+  .act-top h3 { font-size: 18px; font-weight: 800; letter-spacing: 0.3px; }
+  .act-card p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
+  code {
+    font-family: Consolas, monospace; font-size: 11.8px;
+    background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; color: #fff;
+  }
+
+  /* Slide 5: Results */
+  .res-grid {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 20px;
+  }
+  .kpi-stack { display: flex; flex-direction: column; gap: 14px; }
+  .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .kpi { padding: 16px 18px; }
+  .kpi .lbl { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; }
+  .kpi .val { font-size: 28px; font-weight: 900; margin: 6px 0 4px; letter-spacing: -0.5px; }
+  .kpi .sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .bar-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; margin-top: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--pink); border-radius: 99px; }
+  .ins-stack { display: flex; flex-direction: column; gap: 14px; }
+  .ins-card h3 { font-size: 14.5px; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .ins-card h3::before { content: ""; width: 9px; height: 9px; border-radius: 2px; background: var(--pink); display: inline-block; }
+  .ins-card p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  /* Slide 6: Obrigado */
+  .end-grid {
+    position: relative; z-index: 2; flex: 1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+  }
+  .team-list { display: flex; flex-direction: column; gap: 12px; }
+  .member {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 16px;
+  }
+  .member .rm { font-family: Consolas, monospace; color: var(--pink); font-weight: 700; font-size: 15px; }
+  .links-box { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+  .link-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--text);
+  }
+  .link-pill b { color: var(--pink); }
+
+  /* Footer progress */
+  .footbar {
+    position: absolute; left: 52px; right: 52px; bottom: 16px; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11.5px; color: var(--muted);
+  }
+  .progress { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 99px; margin: 0 18px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--pink); transition: width .2s ease; }
+
+  .hint { position: fixed; bottom: 10px; right: 14px; color: #7b8194; font-size: 11.5px; z-index: 9; opacity: .75; }
+  @media print {
+    @page { size: 1200px 675px; margin: 0; }
+    html, body { overflow: visible; background: none; height: auto; }
+    #viewport { position: static; display: block; }
+    #stage { transform: none !important; width: 1200px; height: auto; }
+    .slide { display: flex !important; position: relative; page-break-after: always; break-after: page; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1. CAPA -->
+<section class="slide active">
+  <div class="glow" style="right:-140px;top:-140px;width:620px;height:620px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">MLOps &amp; Governança</div>
+  </div>
+  <div class="cover-grid">
+    <div>
+      <h1 class="h-hero">Credit Scoring<br><span class="accent">Observability</span></h1>
+      <p class="lead" style="margin-top:20px;max-width:560px">
+        Camada de sustentação e confiabilidade para modelos de crédito em produção:
+        <b>contratos de dados</b>, <b>detecção estatística de drift</b>, <b>observabilidade contínua</b>
+        e <b>governança LGPD</b> com análise causal.
+      </p>
+      <div class="pill-row">
+        <div class="pill"><i>◆</i>Pandera</div>
+        <div class="pill"><i>◆</i>XGBoost</div>
+        <div class="pill"><i>◆</i>Evidently AI</div>
+        <div class="pill"><i>◆</i>MLflow</div>
+        <div class="pill"><i>◆</i>Prometheus + Grafana</div>
+      </div>
+    </div>
+    <div class="card card-pink arch-card">
+      <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--pink);margin-bottom:4px">Fluxo da Solução</div>
+      <div class="arch-step"><div class="arch-num">01</div><div><h4>Data Contract (Pandera)</h4><p>Bloqueia lotes inválidos antes da inferência</p></div></div>
+      <div class="arch-step"><div class="arch-num">02</div><div><h4>Scoring Baseline (XGBoost)</h4><p>Modelo treinado na referência (ROC-AUC 0,791)</p></div></div>
+      <div class="arch-step"><div class="arch-num">03</div><div><h4>Drift Detection (Evidently)</h4><p>Testes PSI &amp; Kolmogorov-Smirnov por período</p></div></div>
+      <div class="arch-step"><div class="arch-num">04</div><div><h4>Observability &amp; LGPD</h4><p>Logs JSON, MLflow, Grafana, alertas e auditoria</p></div></div>
+    </div>
+  </div>
+  <div class="footbar"><span>FIAP Pós-Tech MLET</span><div class="progress"><div class="progress-fill" style="width:14.2%"></div></div><span>01 / 07</span></div>
+</section>
+
+<!-- 2. SITUATION -->
+<section class="slide">
+  <div class="glow" style="left:-180px;bottom:-180px;width:540px;height:540px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">01 · Situation</div>
+  </div>
+  <div class="sit-grid">
+    <div>
+      <div style="font-size:13px;font-weight:800;color:var(--pink);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px">Contexto de Negócio</div>
+      <h2 class="h-section">O risco da <span class="accent">degradação silenciosa</span></h2>
+      <p class="lead" style="margin-top:18px">
+        Uma fintech de concessão de crédito mantém um modelo de <b>Credit Scoring</b> em produção.
+        Com mudanças econômicas — <b>inflação</b> e <b>novos perfis de clientes</b> — a diretoria
+        suspeita de decisões erradas, sem nenhuma falha aparente no sistema.
+      </p>
+    </div>
+    <div class="sit-list">
+      <div class="card sit-item">
+        <div class="sit-num">01</div>
+        <div>
+          <h3>Nenhuma exceção é lançada</h3>
+          <p>O serviço continua respondendo normalmente (HTTP 200), mas a qualidade das predições cai em silêncio conforme a distribuição muda.</p>
+        </div>
+      </div>
+      <div class="card sit-item">
+        <div class="sit-num">02</div>
+        <div>
+          <h3>Descoberta tardia e prejuízo direto</h3>
+          <p>Sem monitoramento contínuo de dados e performance, o problema só aparece quando a <b>inadimplência real dispara</b> na carteira.</p>
+        </div>
+      </div>
+      <div class="card sit-item">
+        <div class="sit-num">03</div>
+        <div>
+          <h3>Exposição regulatória (LGPD)</h3>
+          <p>Decisões automatizadas de crédito sem contratos de entrada, rastreabilidade e auditoria de viés geram risco de compliance (<b>Art. 20</b>).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footbar"><span>Situation</span><div class="progress"><div class="progress-fill" style="width:28.5%"></div></div><span>02 / 07</span></div>
+</section>
+
+<!-- 3. TASK -->
+<section class="slide">
+  <div class="glow" style="right:-160px;bottom:-160px;width:520px;height:520px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">02 · Task</div>
+  </div>
+  <div class="bento-2x2">
+    <div class="card task-card">
+      <div>
+        <div class="task-head"><div class="task-title"><span class="num">01</span><span class="lbl">Dados &amp; Separação</span></div></div>
+        <p>Base histórica de clientes de crédito da fintech (<b>30.000 clientes</b>, 22,1% de inadimplência) com separação estrita: <b>20.000 registros de referência</b> (treino) e <b>10.000 de produção</b> para simular a passagem do tempo.</p>
+      </div>
+      <div class="task-tags"><span class="tag">30k amostras</span><span class="tag">20k referência</span><span class="tag">10k produção</span></div>
+    </div>
+    <div class="card task-card">
+      <div>
+        <div class="task-head"><div class="task-title"><span class="num">02</span><span class="lbl">Modelo &amp; Drift</span></div></div>
+        <p>Treinar um classificador base (<b>XGBoost</b>), simular <b>Data Drift</b> e <b>Concept Drift</b> ao longo de 4 períodos e detectar mudanças estatísticas com <b>Evidently AI</b> usando testes <b>PSI</b> e <b>Kolmogorov-Smirnov</b>.</p>
+      </div>
+      <div class="task-tags"><span class="tag">XGBoost</span><span class="tag">Evidently AI</span><span class="tag">PSI + KS</span></div>
+    </div>
+    <div class="card task-card">
+      <div>
+        <div class="task-head"><div class="task-title"><span class="num">03</span><span class="lbl">Contratos &amp; Observabilidade</span></div></div>
+        <p>Interceptar dados inválidos com <b>Data Contracts</b> rígidos antes da ingestão e centralizar logs, experimentos, métricas operacionais e alertas em <b>MLflow</b>, <b>Prometheus</b> e <b>Grafana</b>.</p>
+      </div>
+      <div class="task-tags"><span class="tag">Pandera</span><span class="tag">JSON Logs</span><span class="tag">Prometheus / Grafana</span></div>
+    </div>
+    <div class="card task-card">
+      <div>
+        <div class="task-head"><div class="task-title"><span class="num">04</span><span class="lbl">Governança &amp; Causalidade</span></div></div>
+        <p>Documentar compliance com a <b>LGPD</b> (inventário de PII, base legal, retenção e Art. 20), executar <b>auditoria de viés</b> e <b>teste de proxy</b>, e conduzir uma <b>análise causal</b> da queda de AUC.</p>
+      </div>
+      <div class="task-tags"><span class="tag">LGPD</span><span class="tag">Fairness &amp; Proxy</span><span class="tag">Análise Causal</span></div>
+    </div>
+  </div>
+  <div class="footbar"><span>Task</span><div class="progress"><div class="progress-fill" style="width:42.8%"></div></div><span>03 / 07</span></div>
+</section>
+
+<!-- 4. ACTION -->
+<section class="slide">
+  <div class="glow" style="left:40%;top:-180px;width:500px;height:500px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">03 · Action (1/2) — Dados &amp; Modelo</div>
+  </div>
+  <div class="flow-bar">
+    <span class="node">Lote Recebido</span><span class="arr">→</span>
+    <span class="node" style="color:var(--pink)">Contrato Pandera</span><span class="arr">→</span>
+    <span class="node" style="color:var(--pink)">XGBoost Score</span><span class="arr">→</span>
+    <span class="node">Evidently (PSI/KS)</span><span class="arr">→</span>
+    <span class="node">Alertas</span><span class="arr">→</span>
+    <span class="node">Logs + MLflow + Grafana</span>
+  </div>
+  <div class="bento-3x1">
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">01 · CONTRATO</span><h3>Data Contract (Pandera)</h3></div>
+        <p>Valida cada lote antes da inferência: <code>id</code> único, <code>age</code> entre 18 e 100, <code>limit_bal &gt; 0</code> e categorias válidas. Um lote corrompido gerou <span class="hl">81 violações em 7 checks</span> e foi bloqueado.</p>
+      </div>
+      <div class="task-tags"><span class="tag">Pandera</span><span class="tag">Ingestão Segura</span></div>
+    </div>
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">02 · MODELO</span><h3>Baseline XGBoost</h3></div>
+        <p>Treinado apenas na base de referência com 22 features — <code>id</code> e <code>sex</code> excluídos por minimização de dados. Atingiu <span class="hl">ROC-AUC 0,791</span> e recall de 0,38.</p>
+      </div>
+      <div class="task-tags"><span class="tag">XGBoost</span><span class="tag">22 features</span></div>
+    </div>
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">03 · SIMULAÇÃO</span><h3>Drift em 4 Períodos</h3></div>
+        <p>Simula 4 meses (2.500 clientes cada) com faturas <b>+10% / +25% / +45%</b>, mais atrasos e clientes mais jovens, além de <span class="hl">concept drift</span> em bons pagadores.</p>
+      </div>
+      <div class="task-tags"><span class="tag">Data Drift</span><span class="tag">Concept Drift</span></div>
+    </div>
+  </div>
+  <div class="footbar"><span>Action · Parte 1</span><div class="progress"><div class="progress-fill" style="width:57.1%"></div></div><span>04 / 07</span></div>
+</section>
+
+<!-- 5. ACTION (2/2) -->
+<section class="slide">
+  <div class="glow" style="right:20%;bottom:-180px;width:520px;height:520px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">03 · Action (2/2) — Observabilidade &amp; LGPD</div>
+  </div>
+  <div class="flow-bar">
+    <span class="node">Lote Recebido</span><span class="arr">→</span>
+    <span class="node">Contrato Pandera</span><span class="arr">→</span>
+    <span class="node">XGBoost Score</span><span class="arr">→</span>
+    <span class="node" style="color:var(--pink)">Evidently (PSI/KS)</span><span class="arr">→</span>
+    <span class="node" style="color:var(--pink)">Alertas</span><span class="arr">→</span>
+    <span class="node" style="color:var(--pink)">Logs + MLflow + Grafana</span>
+  </div>
+  <div class="bento-3x1">
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">04 · DETECÇÃO</span><h3>Evidently AI (PSI &amp; KS)</h3></div>
+        <p>Compara cada período de produção contra a referência com testes estatísticos <b>PSI</b> e <b>Kolmogorov-Smirnov</b>, gerando relatórios HTML que apontam as variáveis degradadas.</p>
+      </div>
+      <div class="task-tags"><span class="tag">Evidently AI</span><span class="tag">Relatórios HTML</span></div>
+    </div>
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">05 · MONITORAMENTO</span><h3>Observabilidade</h3></div>
+        <p>Centraliza logs JSON (sem PII), runs no <b>MLflow</b> e métricas no <b>Prometheus + Grafana</b>, disparando alertas para contrato falho, PSI ≥ 0,2 e queda de AUC ≥ 0,05.</p>
+      </div>
+      <div class="task-tags"><span class="tag">MLflow</span><span class="tag">Prometheus</span><span class="tag">Grafana</span></div>
+    </div>
+    <div class="card act-card">
+      <div>
+        <div class="act-top"><span class="act-badge">06 · COMPLIANCE</span><h3>Governança &amp; CI</h3></div>
+        <p>Plano <b>LGPD</b> (Art. 7, X; retenção 24m; Art. 20), auditoria de viés e teste de proxy para <code>sex</code>. Inclui <span class="hl">23 testes</span>, GitHub Actions e app Streamlit.</p>
+      </div>
+      <div class="task-tags"><span class="tag">LGPD</span><span class="tag">23 Testes</span><span class="tag">Streamlit</span></div>
+    </div>
+  </div>
+  <div class="footbar"><span>Action · Parte 2</span><div class="progress"><div class="progress-fill" style="width:71.4%"></div></div><span>05 / 07</span></div>
+</section>
+
+<!-- 5. RESULTS -->
+<section class="slide">
+  <div class="glow" style="right:-120px;top:160px;width:480px;height:480px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">04 · Results</div>
+  </div>
+  <div class="res-grid">
+    <div class="kpi-stack">
+      <div class="kpi-row">
+        <div class="card card-pink kpi">
+          <div class="lbl">Degradação de AUC</div>
+          <div class="val">0,788 <span class="accent">→</span> 0,649</div>
+          <div class="sub">Queda silenciosa do período 1 ao 4; recall cai de 0,344 para 0,267.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:65%"></div></div>
+        </div>
+        <div class="card kpi">
+          <div class="lbl">Inadimplência Real</div>
+          <div class="val">22,0% <span class="accent">→</span> 31,5%</div>
+          <div class="sub">Crescimento progressivo ao longo dos 4 meses simulados.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:82%"></div></div>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="card kpi">
+          <div class="lbl">PSI Máximo (Período 4)</div>
+          <div class="val"><span class="accent">0,50</span> age</div>
+          <div class="sub"><code>pay_1</code> atinge <b>0,27</b>; features intactas permanecem estáveis.</div>
+        </div>
+        <div class="card kpi">
+          <div class="lbl">Alertas no Replay</div>
+          <div class="val"><span class="accent">7</span> críticos</div>
+          <div class="sub">Lote ruim bloqueado; alerta de AUC dispara 1 lote antes do PSI.</div>
+        </div>
+      </div>
+      <div class="card kpi" style="padding:14px 18px">
+        <div class="lbl">Auditoria de Qualidade &amp; Testes</div>
+        <div class="sub" style="margin-top:6px;font-size:13px;color:var(--text)">
+          <b>23 testes automatizados</b> passando com dados locais (21 sem dados no CI) · Stack <b>Docker (Prometheus + Grafana)</b> validada ao vivo.
+        </div>
+      </div>
+    </div>
+    <div class="ins-stack">
+      <div class="card card-pink ins-card">
+        <h3>Lessons · Análise Causal (30 seeds)</h3>
+        <p>Intervindo em cada causa isoladamente no período 4, descobrimos que o <b>concept drift explica quase toda a perda de AUC (-0,128)</b>, enquanto os três <i>data drifts</i> juntos custam apenas <b>-0,011</b>. Conclusão: <b>PSI alto é sinal para investigar, não prova de perda de performance.</b></p>
+      </div>
+      <div class="card ins-card">
+        <h3>Impact · Observabilidade &amp; Governança</h3>
+        <p>O pipeline intercepta dados corrompidos antes da inferência e expõe a degradação nos dashboards do <b>Grafana</b>, <b>MLflow</b>, <b>Evidently</b> e no app <b>Streamlit</b>, sem gravar dados pessoais (PII) em logs ou métricas.</p>
+      </div>
+      <div class="card ins-card">
+        <h3>Opportunities · Próximos Passos</h3>
+        <p>Adicionar <b>reason codes por decisão</b> (Art. 20 LGPD), rotear alertas para o <b>Alertmanager</b>, calcular intervalos de confiança na auditoria de viés e implementar <b>retreino champion vs. challenger</b> com rótulos reais.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footbar"><span>Results</span><div class="progress"><div class="progress-fill" style="width:85.7%"></div></div><span>06 / 07</span></div>
+</section>
+
+<!-- 6. OBRIGADO -->
+<section class="slide">
+  <div class="glow" style="left:-140px;bottom:-140px;width:620px;height:620px"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="fiap-badge"><img src="data:image/png;base64,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" alt="FIAP"></div>
+      <div class="brand-meta">Tech Challenge <span>•</span> Módulo #04</div>
+    </div>
+    <div class="slide-tag">Grupo 102</div>
+  </div>
+  <div class="end-grid">
+    <div>
+      <h1 class="h-hero" style="font-size:82px">Obrigado<span class="accent">.</span></h1>
+      <p class="lead" style="margin-top:16px;max-width:440px">
+        Observabilidade contínua, detecção de drift, qualidade de dados e governança LGPD em produção.
+      </p>
+      <div class="links-box">
+        <div class="link-pill"><b>GitHub</b> github.com/AllySantos/tech_challenge</div>
+        <div class="link-pill"><b>Live Demo</b> credit-scoring-observability.streamlit.app</div>
+      </div>
+    </div>
+    <div class="team-list">
+      <div class="member"><span>Gabriel Gonçalves Furtado</span><span class="rm">RM 371440</span></div>
+      <div class="member"><span>Alícia Rodrigues dos Santos</span><span class="rm">RM 374128</span></div>
+      <div class="member"><span>Rogerio Tristão Junior</span><span class="rm">RM 370501</span></div>
+      <div class="member"><span>Diego W Ribeiro</span><span class="rm">RM 370996</span></div>
+    </div>
+  </div>
+  <div class="footbar"><span>FIAP Pós-Tech MLET</span><div class="progress"><div class="progress-fill" style="width:100%"></div></div><span>07 / 07</span></div>
+</section>
+
+</div></div>
+<div class="hint">← → navegar · F tela cheia · P imprimir/PDF</div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = document.getElementById('stage');
+  let i = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  function fit() {
+    const k = Math.min(innerWidth / 1200, innerHeight / 675);
+    stage.style.transform = 'scale(' + k + ')';
+  }
+  addEventListener('resize', fit); fit(); show(i);
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) show(i + 1);
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) show(i - 1);
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    else if (e.key === 'p' || e.key === 'P') print();
+  });
+  addEventListener('click', e => show(e.clientX > innerWidth / 2 ? i + 1 : i - 1));
+</script>
+</body>
+</html>
