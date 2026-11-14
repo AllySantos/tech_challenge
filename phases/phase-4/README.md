@@ -393,6 +393,11 @@ Labels (actual defaults) arrive late in real life, so performance alerts lag; tr
 
 ## Authors
 
-Developed by the group for the FIAP MLET Tech Challenge, Phase 4.
+Developed by the group for the FIAP MLET Tech Challenge, Phase 4:
+
+- Alícia Rodrigues dos Santos
+- Diego W Ribeiro
+- Gabriel Gonçalves Furtado
+- Rogerio Tristão Junior
 
 Credits: the architecture and the dashboards (Grafana, Streamlit app) were designed by Gabriel Furtado: [GitHub](https://github.com/GFurts) · [LinkedIn](https://linkedin.com/in/gabriel-furtado30) · [Portfolio](https://gabriel-furtado.vercel.app)
