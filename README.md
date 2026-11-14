@@ -13,6 +13,7 @@ Cada fase vive em sua própria pasta sob [`phases/`](phases/) com `README`, depe
 | 1    | Churn Prediction (Telco)             | ✅ Entregue                                  | [phases/phase-1/README.md](phases/phase-1/README.md) | —                                                                                              |
 | 2    | Sistema de Recomendação E-commerce   | 🔧 Pipeline funcional · finalizando entrega | [phases/phase-2/README.md](phases/phase-2/README.md) | [Fase 2 — Sistema de Recomendação](https://github.com/AllySantos/tech_challenge/milestones)   |
 | 3    | Triagem de Laudos Médicos (NLP)      | 🔧 Em desenvolvimento                       | [phases/phase-3/README.md](phases/phase-3/README.md) | —                                                                                              |
+| 4    | Observabilidade, Drift e Governança (Credit Scoring) | ✅ Implementada · falta vídeo STAR | [phases/phase-4/README.md](phases/phase-4/README.md) | —                                                                                              |
 
 > Novas fases entram como `phases/phase-N/` seguindo o mesmo padrão.
 
@@ -29,7 +30,7 @@ cd phases/phase-2
 # ... siga as instruções do README da fase
 ```
 
-**Pré-requisitos gerais:** Python 3.11+, Git, Docker (a partir da Fase 2).
+**Pré-requisitos gerais:** Python 3.11+, Git, Docker (a partir da Fase 2). A Fase 4 usa [Poetry](https://python-poetry.org/).
 
 > **Windows:** use WSL (Ubuntu) ou Git Bash. Comandos `make` e shell scripts não funcionam no CMD/PowerShell nativo.
 
@@ -60,7 +61,8 @@ tech_challenge/
 │   ├── workflows/
 │   │   ├── phase-1-ci.yml          # CI específica da Fase 1 (path-filter em phases/phase-1/**)
 │   │   ├── phase-2-ci.yml
-│   │   └── phase-3-ci.yml
+│   │   ├── phase-3-ci.yml
+│   │   └── phase-4-ci.yml
 │   ├── ISSUE_TEMPLATE/
 │   └── PULL_REQUEST_TEMPLATE.md
 └── phases/
@@ -83,17 +85,26 @@ tech_challenge/
     │   ├── tests/  notebooks/  data/  models/  metrics/
     │   └── .env.example
     │
-    └── phase-3/                    # Triagem de Laudos — API ONNX + Airflow + Prometheus/Grafana
-        ├── README.md
-        ├── Makefile
-        ├── docker-compose.yml      # api + prometheus + grafana; profiles: orchestration, load
-        ├── docker/                 # Dockerfile.api, Dockerfile.airflow
-        ├── airflow/dags/           # triage_training_pipeline
-        ├── monitoring/             # prometheus.yml + provisionamento do Grafana
-        ├── docs/                   # model_card, optimization, images
-        ├── src/                    # configs, data, models, evaluation, inference, app, pipeline
-        ├── scripts/                # loadgen, report_latency
-        └── tests/  data/  models/  metrics/  reports/
+    ├── phase-3/                    # Triagem de Laudos — API ONNX + Airflow + Prometheus/Grafana
+    │   ├── README.md
+    │   ├── Makefile
+    │   ├── docker-compose.yml      # api + prometheus + grafana; profiles: orchestration, load
+    │   ├── docker/                 # Dockerfile.api, Dockerfile.airflow
+    │   ├── airflow/dags/           # triage_training_pipeline
+    │   ├── monitoring/             # prometheus.yml + provisionamento do Grafana
+    │   ├── docs/                   # model_card, optimization, images
+    │   ├── src/                    # configs, data, models, evaluation, inference, app, pipeline
+    │   ├── scripts/                # loadgen, report_latency
+    │   └── tests/  data/  models/  metrics/  reports/
+    │
+    └── phase-4/                    # Credit Scoring Observability — contrato Pandera, drift Evidently, MLflow + Grafana, LGPD
+        ├── README.md               # arquitetura, governança, LGPD e análise causal
+        ├── pyproject.toml / poetry.lock
+        ├── docker-compose.yml      # prometheus + grafana
+        ├── monitoring/             # alertas, prometheus.yml e dashboard do Grafana
+        ├── app/                    # app Streamlit de replay
+        ├── reports/                # relatórios HTML do Evidently e análises (JSON/MD)
+        └── src/  tests/  docs/  data/
 ```
 
 ---
