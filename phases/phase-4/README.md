@@ -7,7 +7,7 @@
 
 > Reliability and governance layer for a credit-scoring model in production: **data contracts**, **drift simulation and detection**, **observability** (logs, MLflow, Prometheus, Grafana), **causal analysis** of performance degradation and **LGPD-oriented governance**.
 
-Project for the **FIAP MLET Tech Challenge, Phase 4** (Continuous Observability, Drift Detection, Data Quality and Governance in Production). Built by [Gabriel Furtado](https://github.com/GFurts).
+Project for the **FIAP MLET Tech Challenge, Phase 4** (Continuous Observability, Drift Detection, Data Quality and Governance in Production). Built by the group. Architecture and dashboards by [Gabriel Furtado](https://github.com/GFurts).
 
 ## The problem
 
@@ -391,6 +391,8 @@ Labels (actual defaults) arrive late in real life, so performance alerts lag; tr
 - Latency figures come from a local machine.
 - Grafana demo credentials are for local use only.
 
-## Author
+## Authors
 
-Gabriel Furtado: [GitHub](https://github.com/GFurts) · [LinkedIn](https://linkedin.com/in/gabriel-furtado30) · [Portfolio](https://gabriel-furtado.vercel.app)
+Developed by the group for the FIAP MLET Tech Challenge, Phase 4.
+
+Credits: the architecture and the dashboards (Grafana, Streamlit app) were designed by Gabriel Furtado: [GitHub](https://github.com/GFurts) · [LinkedIn](https://linkedin.com/in/gabriel-furtado30) · [Portfolio](https://gabriel-furtado.vercel.app)
